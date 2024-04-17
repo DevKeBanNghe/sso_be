@@ -1,0 +1,8 @@
+.husky
+.vscode
+husky-prepare
+Dockerfile
+data
+dist
+logs
+*.drawio

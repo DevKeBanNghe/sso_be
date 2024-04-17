@@ -1,0 +1,7 @@
+*.drawio
+.husky
+husky-prepare
+data
+Dockerfile
+logs
+*.prisma
