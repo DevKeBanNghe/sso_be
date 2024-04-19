@@ -4,7 +4,13 @@ import { createLogger } from 'winston';
 import { WinstonModule } from 'nest-winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { ConfigService } from '@nestjs/config';
-import { ConsoleType, Environments, EnvVars, LogLevel } from 'src/consts';
+import {
+  ConsoleType,
+  Environments,
+  EnvVars,
+  LogLevel,
+  WinstonEnvs,
+} from 'src/consts';
 const configService = new ConfigService();
 const app_name = configService.get(EnvVars.APP_NAME);
 const env = configService.get(EnvVars.NODE_ENV);
@@ -54,8 +60,8 @@ const _createDailyRotateFile = (
     filename: `${app_name}_${env}_%DATE%.${type_log}.log`,
     datePattern: 'YYYY_MM_DD',
     // zippedArchive: true,
-    maxSize: configService.get(EnvVars.LOG_MAX_SIZE),
-    maxFiles: configService.get(EnvVars.LOG_MAX_DATE),
+    maxSize: configService.get(WinstonEnvs.LOG_MAX_SIZE),
+    maxFiles: configService.get(WinstonEnvs.LOG_MAX_DATE),
     format: _getCombine(ConsoleType.FILE),
   }
 ) => new DailyRotateFile(options);

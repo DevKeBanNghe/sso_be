@@ -19,6 +19,7 @@ enum TypeLogin {
   ACCOUNT
   FACEBOOK
   GOOGLE
+  GITHUB
 }
 
 model User {
@@ -27,7 +28,7 @@ model User {
   user_last_name     String?
   user_name          String
   user_password      String?
-  user_email         String    @unique
+  user_email         String?   @unique
   user_date_of_birth String?
   user_phone_number  String?
   user_image_url     String?

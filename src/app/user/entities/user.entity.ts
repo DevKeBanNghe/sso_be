@@ -7,6 +7,7 @@ export enum TypeLogin {
   ACCOUNT = 'ACCOUNT',
   FACEBOOK = 'FACEBOOK',
   GOOGLE = 'GOOGLE',
+  GITHUB = 'GITHUB',
 }
 
 export class User {

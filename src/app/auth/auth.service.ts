@@ -16,6 +16,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { MailTemplate } from 'src/consts/mail.const';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
 import { JwtService } from '@nestjs/jwt';
+import { GithubUserDto } from './dto/github.dto';
 
 @Injectable()
 export class AuthService {
@@ -105,6 +106,25 @@ export class AuthService {
       user_email: user.user_email,
     };
   }
+
+  async signInWithGithub(signInSocialDto: SignInSocialDto) {
+    // check user exists
+    const user = await this.userService.getFirstBy({
+      user_email: signInSocialDto.user_email,
+      user_type_login: TypeLogin.GITHUB,
+    });
+    if (!user)
+      throw new UnauthorizedException('Not found user login with google');
+
+    return {
+      ...(await this.createToken({
+        user_id: user.user_id,
+        user_name: user.user_name,
+      })),
+      user_name: user.user_name,
+      user_email: user.user_email,
+    };
+  }
   async signIn(signInDto: SignInDto) {
     const user_name = signInDto.user_name;
     // check user exists
@@ -151,6 +171,30 @@ export class AuthService {
       password: null,
       user_image_url: user.picture,
       user_type_login: TypeLogin.GOOGLE,
+    });
+  }
+
+  async signUpWithGithub(user: GithubUserDto) {
+    if (!user) throw new UnauthorizedException('Not found user from google!');
+
+    const userFind = await this.userService.getFirstBy({
+      user_email: user.email ?? user.user_name,
+      user_type_login: TypeLogin.GITHUB,
+    });
+
+    if (userFind)
+      return await this.signInWithGoogle({
+        user_name: userFind.user_name,
+      });
+
+    return await this.signUp({
+      email: user.email,
+      user_first_name: user.first_name,
+      user_last_name: user.last_name,
+      user_name: user.user_name ?? `${user.first_name} ${user.last_name}`,
+      password: null,
+      user_image_url: user.avatar_url,
+      user_type_login: TypeLogin.GITHUB,
     });
   }
 

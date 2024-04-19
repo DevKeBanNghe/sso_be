@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserModule } from '../user/user.module';
 import { JwtModule } from '@nestjs/jwt';
-import { EnvMail, EnvVars } from 'src/consts';
+import { MailEnvs, EnvVars } from 'src/consts';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TokenExpireIn } from 'src/consts/jwt.const';
 import { ApiModule } from 'src/common/utils/api/api.module';
@@ -11,6 +11,7 @@ import { StringUtilService } from 'src/common/utils/string/string-util.service';
 import { GoogleStrategy } from './strategies/google-oauth2.strategy';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
+import { GithubStrategy } from './strategies/github.strategy';
 @Module({
   imports: [
     UserModule,
@@ -21,13 +22,13 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         transport: {
-          host: configService.get(EnvMail.MAIL_HOST),
-          port: configService.get(EnvMail.MAIL_PORT),
+          host: configService.get(MailEnvs.MAIL_HOST),
+          port: configService.get(MailEnvs.MAIL_PORT),
           ignoreTLS: false,
           secure: false,
           auth: {
-            user: configService.get(EnvMail.MAIL_INCOMING_USER),
-            pass: configService.get(EnvMail.MAIL_INCOMING_PASS),
+            user: configService.get(MailEnvs.MAIL_INCOMING_USER),
+            pass: configService.get(MailEnvs.MAIL_INCOMING_PASS),
           },
         },
         defaults: {
@@ -56,7 +57,13 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, StringUtilService, GoogleStrategy, ConfigService],
+  providers: [
+    AuthService,
+    StringUtilService,
+    GoogleStrategy,
+    ConfigService,
+    GithubStrategy,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

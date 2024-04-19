@@ -6,7 +6,7 @@ import { getEnvs, validationSchema } from 'src/confs/env.confs';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { UserModule } from './user/user.module';
-import { EnvVars } from 'src/consts';
+import { WinstonEnvs } from 'src/consts';
 import { AuthModule } from './auth/auth.module';
 import { DeviceModule } from './device/device.module';
 import { ApiModule } from 'src/common/utils/api/api.module';
@@ -29,8 +29,8 @@ import { applyOtherMiddlewares } from 'src/common/middlewares';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
         {
-          ttl: config.get(EnvVars.THROTTLE_TTL),
-          limit: config.get(EnvVars.THROTTLE_LIMIT),
+          ttl: config.get(WinstonEnvs.THROTTLE_TTL),
+          limit: config.get(WinstonEnvs.THROTTLE_LIMIT),
         },
       ],
     }),

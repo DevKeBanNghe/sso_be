@@ -16,7 +16,6 @@ import {
 import { AuthService } from './auth.service';
 import { SignInDto, SignUpDto } from './dto/sign.dto';
 import { StringUtilService } from 'src/common/utils/string/string-util.service';
-import { ApiService } from 'src/common/utils/api/api.service';
 import { SaveTokenInterceptor } from './interceptors/save-token.interceptor';
 import { GoogleOAuth2Guard } from './guards/google-oauth2.guard';
 import { Request, Response } from 'express';
@@ -29,6 +28,8 @@ import {
 } from 'src/consts/cookie.const';
 import { RedirectToInterceptor } from './interceptors/redirect-to.interceptor';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
+import { GithubGuard } from './guards/github.guard';
+import { GithubUserDto } from './dto/github.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -71,6 +72,31 @@ export class AuthController {
       req.user as GoogleUserDto
     );
     if (!data) throw new UnauthorizedException('Sign up with google failed!');
+
+    return data;
+  }
+
+  @Get('github')
+  @Redirect('github-redirect')
+  githubHandle(@Res() res: Response, @Query() query: any) {
+    res.cookie(COOKIE_REDIRECT_KEY, query, {
+      httpOnly: true,
+      maxAge: this.stringService.toMS(COOKIE_REDIRECT_EXPIRE_IN),
+    });
+  }
+
+  @Get('github-redirect')
+  @UseGuards(GithubGuard)
+  @UseInterceptors(RedirectToInterceptor)
+  async signUpWithGithub(@Req() req: Request) {
+    const cookie_data = req.cookies[COOKIE_REDIRECT_KEY];
+    if (!cookie_data.from_url)
+      throw new UnauthorizedException('Sign up with github failed!');
+
+    const data = await this.authService.signUpWithGithub(
+      req.user as GithubUserDto
+    );
+    if (!data) throw new UnauthorizedException('Sign up with github failed!');
 
     return data;
   }

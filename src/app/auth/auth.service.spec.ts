@@ -1,29 +1,15 @@
-import { Test } from '@nestjs/testing';
 import { SignInDto } from './dto/sign.dto';
 import { AuthService } from './auth.service';
 import { AuthModule } from './auth.module';
-import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
-
-const moduleMocker = new ModuleMocker(global);
+import { AutoMockingTestingModule } from 'src/common/testing/auto-mocking/auto-mocking-testing.module';
 
 describe('AuthService', () => {
   let service: AuthService;
 
   beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
+    const moduleRef = await AutoMockingTestingModule.createTestingModule({
       imports: [AuthModule],
-    })
-      .useMocker((token) => {
-        if (typeof token === 'function') {
-          const mockMetadata = moduleMocker.getMetadata(
-            token
-          ) as MockFunctionMetadata<any, any>;
-          const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-          return new Mock();
-        }
-      })
-      .compile();
-
+    });
     service = moduleRef.get(AuthService);
   });
   describe('signIn', () => {
