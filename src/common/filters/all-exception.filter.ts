@@ -56,6 +56,8 @@ export class AllExceptionFilter implements ExceptionFilter {
         }),
         exceptionInstance.status
       );
-    } catch (error) {}
+    } catch (error) {
+      Logger.error(error);
+    }
   }
 }

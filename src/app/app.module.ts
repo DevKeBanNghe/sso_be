@@ -10,9 +10,11 @@ import { EnvVars } from 'src/consts';
 import { AuthModule } from './auth/auth.module';
 import { DeviceModule } from './device/device.module';
 import { ApiModule } from 'src/common/utils/api/api.module';
-import { StringModule } from 'src/common/utils/string/string.module';
+import { StringUtilModule } from 'src/common/utils/string/string-util.module';
 import { DecodedTokenMiddleware } from 'src/common/middlewares/decoded-token.middleware';
 import { SaveTokenInterceptor } from './auth/interceptors/save-token.interceptor';
+import { DefaultParamsMiddleware } from 'src/common/middlewares/default-params.middleware';
+import { applyOtherMiddlewares } from 'src/common/middlewares';
 
 @Module({
   imports: [
@@ -36,7 +38,7 @@ import { SaveTokenInterceptor } from './auth/interceptors/save-token.interceptor
     AuthModule,
     DeviceModule,
     ApiModule,
-    StringModule,
+    StringUtilModule,
   ],
   controllers: [AppController],
   providers: [
@@ -50,6 +52,9 @@ import { SaveTokenInterceptor } from './auth/interceptors/save-token.interceptor
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(DecodedTokenMiddleware).forRoutes('*'); // Áp dụng middleware cho tất cả các route
+    applyOtherMiddlewares(consumer);
+    consumer
+      .apply(DefaultParamsMiddleware, DecodedTokenMiddleware)
+      .forRoutes('*');
   }
 }

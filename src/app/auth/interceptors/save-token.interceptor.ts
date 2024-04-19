@@ -7,17 +7,16 @@ import {
 import { map, Observable } from 'rxjs';
 import { TokenExpireIn } from 'src/consts/jwt.const';
 import { AuthToken } from '../types/token.type';
-import { StringService } from 'src/common/utils/string/string.service';
+import { StringUtilService } from 'src/common/utils/string/string-util.service';
 import { Request, Response } from 'express';
 import {
   COOKIE_ACCESS_TOKEN_KEY,
-  COOKIE_REDIRECT_KEY,
   COOKIE_REFRESH_TOKEN_KEY,
 } from 'src/consts/cookie.const';
 
 @Injectable()
 export class SaveTokenInterceptor implements NestInterceptor {
-  constructor(private stringService: StringService) {}
+  constructor(private stringService: StringUtilService) {}
 
   setTokenToCookie(res: Response, data: AuthToken) {
     if (data.access_token)

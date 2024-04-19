@@ -3,7 +3,6 @@ import { SignInDto } from './dto/sign.dto';
 import { AuthService } from './auth.service';
 import { AuthModule } from './auth.module';
 import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
-import { GoogleStrategy } from './strategies/google-oauth2.strategy';
 
 const moduleMocker = new ModuleMocker(global);
 

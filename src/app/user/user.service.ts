@@ -7,9 +7,11 @@ import {
   DeleteService,
   GetAllService,
   GetDetailService,
+  UpdateService,
 } from 'src/common/interfaces/service.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService
@@ -17,9 +19,18 @@ export class UserService
     CreateService<CreateUserDto>,
     GetAllService,
     DeleteService,
-    GetDetailService
+    GetDetailService,
+    UpdateService<UpdateUserDto>
 {
   constructor(private prisma: PrismaService) {}
+  update(id: number, updateDto: UpdateUserDto) {
+    return this.prisma.user.update({
+      where: { user_id: id },
+      data: {
+        ...updateDto,
+      },
+    });
+  }
   getDetail(id: number) {
     return this.getFirstBy({ user_id: id });
   }

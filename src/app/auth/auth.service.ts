@@ -4,8 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from '../user/user.service';
-import { StringService } from 'src/common/utils/string/string.service';
-import { JwtService } from '@nestjs/jwt';
+import { StringUtilService } from 'src/common/utils/string/string-util.service';
 import { TokenExpireIn } from 'src/consts/jwt.const';
 import { SignInDto, SignInSocialDto, SignUpDto } from './dto/sign.dto';
 import { AuthToken } from './types/token.type';
@@ -13,16 +12,22 @@ import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts';
 import { GoogleUserDto } from './dto/google-oauth2.dto';
 import { TypeLogin } from '../user/entities/user.entity';
-import { WebRedirectDto } from './dto/web.dto';
+import { MailerService } from '@nestjs-modules/mailer';
+import { MailTemplate } from 'src/consts/mail.const';
+import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
-    private stringService: StringService,
+    private stringService: StringUtilService,
     private jwtService: JwtService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private readonly mailerService: MailerService
   ) {}
+
+  private readonly VERIFY_PASSWORD_EXPIRE_IN = '20s';
 
   async verifyToken(
     token: string,
@@ -64,7 +69,7 @@ export class AuthService {
 
     const userCreated = await this.userService.create({
       user_email: signUpDto.email,
-      user_password: await this.stringService.hash(signUpDto.password),
+      user_password: await this.stringService.hashSync(signUpDto.password),
       user_name: signUpDto.user_name,
       user_first_name: signUpDto.user_first_name,
       user_last_name: signUpDto.user_last_name,
@@ -109,7 +114,7 @@ export class AuthService {
       { user_phone_number: user_name },
     ]);
     if (!user) throw new UnauthorizedException();
-    const is_correct_pwd = await this.stringService.compareHash(
+    const is_correct_pwd = await this.stringService.compareHashSync(
       signInDto.password,
       user.user_password
     );
@@ -146,6 +151,53 @@ export class AuthService {
       password: null,
       user_image_url: user.picture,
       user_type_login: TypeLogin.GOOGLE,
+    });
+  }
+
+  sendSMS() {
+    return {};
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const user = await this.userService.getFirstBy([
+      { user_email: forgotPasswordDto.email },
+      { user_phone_number: forgotPasswordDto.phone_number },
+    ]);
+    if (!user) throw new UnauthorizedException('Not found user');
+
+    if (forgotPasswordDto.email) {
+      this.mailerService.sendMail({
+        to: user.user_email,
+        subject: 'Reset password',
+        template: MailTemplate.RESET_PASSWORD,
+        context: {
+          redirect_to: `${this.configService.get(
+            EnvVars.URL_FE_SSO
+          )}/reset-password`,
+        },
+      });
+    } else {
+      this.sendSMS();
+    }
+
+    const code_reset = this.stringService.encrypt(
+      {
+        user_id: user.user_id,
+      },
+      this.VERIFY_PASSWORD_EXPIRE_IN
+    );
+    return { code_reset };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const decoded = this.stringService.decrypt(resetPasswordDto.code_reset);
+
+    if (!decoded) throw new BadRequestException('Reset password failed');
+
+    return await this.userService.update(decoded.user_id, {
+      user_password: await this.stringService.hashSync(
+        resetPasswordDto.password
+      ),
     });
   }
 }

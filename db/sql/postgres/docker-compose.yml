@@ -8,7 +8,7 @@ services:
     volumes:
       - ${PATH_BACKUP_DATA}/pg1:/var/lib/postgresql/data
     environment:
-      -  POSTGRES_MASTER=true
+      - POSTGRES_MASTER=true
     ports:
       - ${PG_MASTER_PORT}:5432
 
