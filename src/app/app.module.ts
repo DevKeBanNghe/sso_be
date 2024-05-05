@@ -15,6 +15,12 @@ import { DecodedTokenMiddleware } from 'src/common/middlewares/decoded-token.mid
 import { SaveTokenInterceptor } from './auth/interceptors/save-token.interceptor';
 import { DefaultParamsMiddleware } from 'src/common/middlewares/default-params.middleware';
 import { applyOtherMiddlewares } from 'src/common/middlewares';
+import { RoleModule } from './role/role.module';
+import { PermissionModule } from './permission/permission.module';
+import { PrismaModule } from 'src/common/db/prisma/prisma.module';
+import { GroupRoleModule } from './group-role/group-role.module';
+import { GroupPermissionModule } from './group-permission/group-permission.module';
+import { WebpageModule } from './webpage/webpage.module';
 
 @Module({
   imports: [
@@ -34,11 +40,17 @@ import { applyOtherMiddlewares } from 'src/common/middlewares';
         },
       ],
     }),
+    PrismaModule,
     UserModule,
     AuthModule,
     DeviceModule,
     ApiModule,
     StringUtilModule,
+    RoleModule,
+    PermissionModule,
+    WebpageModule,
+    GroupRoleModule,
+    GroupPermissionModule,
   ],
   controllers: [AppController],
   providers: [

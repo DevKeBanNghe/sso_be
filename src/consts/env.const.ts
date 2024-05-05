@@ -10,7 +10,6 @@ export enum EnvVars {
   WHITE_LIST = 'WHITE_LIST',
   URL_FE_SSO = 'URL_FE_SSO',
   JWT_SECRET_KEY = 'JWT_SECRET_KEY',
-  SESSION_SECRET_KEY = 'SESSION_SECRET_KEY',
 }
 export enum WinstonEnvs {
   THROTTLE_TTL = 'THROTTLE_TTL',

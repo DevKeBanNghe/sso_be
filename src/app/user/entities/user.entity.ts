@@ -31,6 +31,9 @@ export class User {
   @IsString()
   user_image_url: string;
 
+  @IsNumber()
+  role_id: number;
+
   @IsArray()
   @Type(() => Device)
   user_devices: Device[];

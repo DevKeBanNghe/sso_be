@@ -147,6 +147,7 @@ export class AuthService {
       })),
       user_name: user.user_name,
       user_email: user.user_email,
+      role_id: user.role_id,
     };
   }
 
@@ -238,7 +239,8 @@ export class AuthService {
 
     if (!decoded) throw new BadRequestException('Reset password failed');
 
-    return await this.userService.update(decoded.user_id, {
+    return await this.userService.update({
+      user_id: decoded.user_id,
       user_password: await this.stringService.hashSync(
         resetPasswordDto.password
       ),

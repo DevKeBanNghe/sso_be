@@ -20,17 +20,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     profile: any,
     done: (err?: Error | null, profile?: any) => void
   ) {
-    const {
-      // given_name: first_name,
-      // family_name: last_name,
-      name,
-      login: user_name,
-      ...payload
-    } = profile._json;
-    console.log(
-      '🚀 ~ GithubStrategy ~ classGithubStrategyextendsPassportStrategy ~ profile._json:',
-      profile._json
-    );
+    const { name, login: user_name, ...payload } = profile._json;
     const indexFirstSpaceName = name.indexOf(' ');
     const user = {
       first_name: name.slice(0, indexFirstSpaceName),

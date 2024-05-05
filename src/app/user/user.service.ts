@@ -18,17 +18,16 @@ export class UserService
   implements
     CreateService<CreateUserDto>,
     GetAllService,
-    DeleteService,
+    DeleteService<number>,
     GetDetailService,
     UpdateService<UpdateUserDto>
 {
   constructor(private prisma: PrismaService) {}
-  update(id: number, updateDto: UpdateUserDto) {
+  update(updateDto: UpdateUserDto) {
+    const { user_id, ...dataUpdate } = updateDto;
     return this.prisma.user.update({
-      where: { user_id: id },
-      data: {
-        ...updateDto,
-      },
+      where: { user_id },
+      data: dataUpdate,
     });
   }
   getDetail(id: number) {

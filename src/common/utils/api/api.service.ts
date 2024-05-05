@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Request } from 'express';
-import { ApiResponse } from './api.entity';
+import { ApiResponse, FormatPagination } from './api.entity';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts';
 import { PATHS_NOT_AUTH } from 'src/consts/api.const';
@@ -37,5 +37,9 @@ export class ApiService {
       errors,
       data,
     };
+  }
+
+  formatPagination<T>(formatPagination: FormatPagination<T>) {
+    return new FormatPagination<T>(formatPagination);
   }
 }

@@ -34,6 +34,8 @@ model User {
   user_image_url     String?
   user_devices       Device[]
   user_type_login    TypeLogin @default(ACCOUNT)
+  role               Role?     @relation(fields: [role_id], references: [role_id])
+  role_id            Int?
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
 }
@@ -48,49 +50,57 @@ model Device {
 }
 
 model Role {
-  role_id          Int         @id @default(autoincrement())
+  role_id          Int        @id @default(autoincrement())
   role_name        String
   role_description String?
-  created_at       DateTime    @default(now())
-  updated_at       DateTime    @updatedAt
-  GroupRole        GroupRole[]
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
+  User             User[]
+  GroupRole        GroupRole? @relation(fields: [group_role_id], references: [group_role_id])
+  group_role_id    Int?
 }
 
-model Group {
-  group_id          Int               @id @default(autoincrement())
-  group_name        String
-  group_description String?
-  group_parent_id   Int
-  created_at        DateTime          @default(now())
-  updated_at        DateTime          @updatedAt
-  GroupRole         GroupRole[]
-  GroupPermission   GroupPermission[]
+model Webpage {
+  webpage_id          Int         @id @default(autoincrement())
+  webpage_url         String
+  webpage_description String?
+  GroupRole           GroupRole[]
 }
 
 model GroupRole {
-  group    Group @relation(fields: [group_id], references: [group_id])
-  group_id Int
-  role     Role  @relation(fields: [role_id], references: [role_id])
-  role_id  Int
+  group_role_id          Int               @id @default(autoincrement())
+  group_role_name        String
+  group_role_description String?
+  group_role_parent_id   Int?
+  created_at             DateTime          @default(now())
+  updated_at             DateTime          @updatedAt
+  Role                   Role[]
+  GroupPermission        GroupPermission[]
 
-  @@id([group_id, role_id])
+  Webpage    Webpage? @relation(fields: [webpage_id], references: [webpage_id])
+  webpage_id Int?
 }
 
 model Permission {
-  permission_id          Int               @id @default(autoincrement())
+  permission_id          Int              @id @default(autoincrement())
   permission_name        String
-  permission_description String
-  permission_route       String
-  created_at             DateTime          @default(now())
-  updated_at             DateTime          @updatedAt
-  GroupPermission        GroupPermission[]
+  permission_description String?
+  permission_key         String
+  created_at             DateTime         @default(now())
+  updated_at             DateTime         @updatedAt
+  GroupPermission        GroupPermission? @relation(fields: [group_permission_id], references: [group_permission_id])
+  group_permission_id    Int?
 }
 
 model GroupPermission {
-  group         Group      @relation(fields: [group_id], references: [group_id])
-  group_id      Int
-  permission    Permission @relation(fields: [permission_id], references: [permission_id])
-  permission_id Int
-
-  @@id([group_id, permission_id])
+  group_permission_id              Int          @id @default(autoincrement())
+  group_permission_name            String
+  group_permission_description     String?
+  group_permission_parent_id       Int?
+  group_permission_route_resources String?
+  created_at                       DateTime     @default(now())
+  updated_at                       DateTime     @updatedAt
+  Permission                       Permission[]
+  GroupRole                        GroupRole?   @relation(fields: [group_role_id], references: [group_role_id])
+  group_role_id                    Int?
 }

@@ -15,13 +15,14 @@ describe('AuthService', () => {
   describe('signIn', () => {
     it('should return auth', async () => {
       const signInDto: SignInDto = {
-        user_name: 'trung1',
+        user_name: 'trung@gmail.com',
         password: '123456',
       };
 
       const result = {
-        user_name: 'trung1',
-        user_email: 'trung1@gmail.com',
+        user_name: 'trung',
+        user_email: 'trung@gmail.com',
+        role_id: null,
       };
 
       const { access_token, refresh_token, ...user_data } =

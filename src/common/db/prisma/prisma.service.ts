@@ -36,12 +36,10 @@ export class PrismaService
       Logger.log('Connected to Prisma successfully !');
       this.is_connected = true;
     } catch (error) {
-      if (error && !this.is_connected) {
-        Logger.error('Error connecting to prisma, retrying ...');
-        setTimeout(async () => {
-          await this.connectToPrisma();
-        }, this.RETRY_AFTER);
-      }
+      Logger.error('Error connecting to prisma, retrying ...');
+      setTimeout(async () => {
+        await this.connectToPrisma();
+      }, this.RETRY_AFTER);
     }
   }
 
