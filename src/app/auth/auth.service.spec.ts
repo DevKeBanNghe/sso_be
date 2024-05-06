@@ -21,8 +21,6 @@ describe('AuthService', () => {
 
       const result = {
         user_name: 'trung',
-        user_email: 'trung@gmail.com',
-        role_id: null,
       };
 
       const { access_token, refresh_token, ...user_data } =

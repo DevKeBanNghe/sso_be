@@ -7,12 +7,7 @@ import {
 import { User } from '../entities/user.entity';
 
 class UserOption extends PartialType(
-  OmitType(User, [
-    'user_devices',
-    'user_id',
-    'created_at',
-    'updated_at',
-  ] as const)
+  OmitType(User, ['Device', 'user_id', 'created_at', 'updated_at'] as const)
 ) {}
 
 class UserRequired extends PickType(User, [

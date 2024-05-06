@@ -32,9 +32,9 @@ model User {
   user_date_of_birth String?
   user_phone_number  String?
   user_image_url     String?
-  user_devices       Device[]
   user_type_login    TypeLogin @default(ACCOUNT)
-  role               Role?     @relation(fields: [role_id], references: [role_id])
+  Device             Device[]
+  Role               Role?     @relation(fields: [role_id], references: [role_id])
   role_id            Int?
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
@@ -45,7 +45,7 @@ model Device {
   device_ip  String?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  user       User?    @relation(fields: [user_id], references: [user_id])
+  User       User?    @relation(fields: [user_id], references: [user_id])
   user_id    Int?
 }
 

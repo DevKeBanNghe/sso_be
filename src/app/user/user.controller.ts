@@ -7,44 +7,19 @@ import {
   UsePipes,
   ParseIntPipe,
   Query,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
+import { KEY_FROM_DECODED_TOKEN } from 'src/consts/jwt.const';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  // @ApiBody({ type: [CreateUserDto] })
-  // @Post()
-  // create(@Body() createUserDto: CreateUserDto) {
-  //   return this.userService.create(createUserDto);
-  // }
-
-  @Get()
-  getAll(@Body() body) {
-    // console.log('🚀 ~ UserController ~ getAll ~ body:', body);
-    return this.userService.getAll();
-  }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   return this.userService.update(id, updateUserDto);
-  // }
-
-  @Delete(':id')
-  @UsePipes(ParseIntPipe)
-  remove(@Param('id') id: number) {
-    return this.userService.remove(id);
-  }
-
-  @Delete()
-  removeBy(@Query() query) {
-    return this.userService.removeBy(query);
-  }
-
-  @Get(':id')
-  @UsePipes(ParseIntPipe)
-  getDetail(@Param('id') id: number) {
-    return this.userService.getDetail(id);
+  @Get('/info')
+  getUserInfo(@Body() body) {
+    const user = body[KEY_FROM_DECODED_TOKEN];
+    if (!user) throw new UnauthorizedException();
+    return user;
   }
 }

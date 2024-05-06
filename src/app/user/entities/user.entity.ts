@@ -36,7 +36,7 @@ export class User {
 
   @IsArray()
   @Type(() => Device)
-  user_devices: Device[];
+  Device: Device[];
 
   @IsEnum(TypeLogin)
   user_type_login: TypeLogin;

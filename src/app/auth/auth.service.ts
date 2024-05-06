@@ -6,7 +6,7 @@ import {
 import { UserService } from '../user/user.service';
 import { StringUtilService } from 'src/common/utils/string/string-util.service';
 import { TokenExpireIn } from 'src/consts/jwt.const';
-import { SignInDto, SignInSocialDto, SignUpDto } from './dto/sign.dto';
+import { SignInDto, SignUpDto } from './dto/sign.dto';
 import { AuthToken } from './types/token.type';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts';
@@ -28,7 +28,7 @@ export class AuthService {
     private readonly mailerService: MailerService
   ) {}
 
-  private readonly VERIFY_PASSWORD_EXPIRE_IN = '20s';
+  private readonly VERIFY_PASSWORD_EXPIRE_IN = '5m';
 
   async verifyToken(
     token: string,
@@ -58,11 +58,15 @@ export class AuthService {
   }
 
   async signUp(signUpDto: SignUpDto) {
-    const user = await this.userService.getFirstBy([
-      { user_email: signUpDto.email },
-      { user_name: signUpDto.user_name },
-      { user_phone_number: signUpDto.phone_number },
-    ]);
+    const user = await this.userService.getInstance().findFirst({
+      where: {
+        OR: [
+          { user_email: signUpDto.email },
+          { user_name: signUpDto.user_name },
+          { user_phone_number: signUpDto.phone_number },
+        ],
+      },
+    });
 
     if (user) throw new BadRequestException('Information has been registered!');
 
@@ -88,80 +92,78 @@ export class AuthService {
     });
   }
 
-  async signInWithGoogle(signInSocialDto: SignInSocialDto) {
-    // check user exists
-    const user = await this.userService.getFirstBy({
-      user_email: signInSocialDto.user_email,
-      user_type_login: TypeLogin.GOOGLE,
-    });
-    if (!user)
-      throw new UnauthorizedException('Not found user login with google');
-
-    return {
-      ...(await this.createToken({
-        user_id: user.user_id,
-        user_name: user.user_name,
-      })),
-      user_name: user.user_name,
-      user_email: user.user_email,
-    };
-  }
-
-  async signInWithGithub(signInSocialDto: SignInSocialDto) {
-    // check user exists
-    const user = await this.userService.getFirstBy({
-      user_email: signInSocialDto.user_email,
-      user_type_login: TypeLogin.GITHUB,
-    });
-    if (!user)
-      throw new UnauthorizedException('Not found user login with google');
-
-    return {
-      ...(await this.createToken({
-        user_id: user.user_id,
-        user_name: user.user_name,
-      })),
-      user_name: user.user_name,
-      user_email: user.user_email,
-    };
-  }
   async signIn(signInDto: SignInDto) {
     const user_name = signInDto.user_name;
-    // check user exists
-    const user = await this.userService.getFirstBy([
-      { user_name },
-      { user_email: user_name },
-      { user_phone_number: user_name },
-    ]);
+    const conditionFindUser = {
+      OR: [
+        { user_name },
+        { user_email: user_name },
+        { user_phone_number: user_name },
+      ],
+      user_type_login: signInDto.user_type_login ?? TypeLogin.ACCOUNT,
+    };
+    if (signInDto.password) delete conditionFindUser.user_type_login;
+    const user = await this.userService.getInstance().findFirst({
+      where: conditionFindUser,
+      include: {
+        Role: {
+          select: {
+            GroupRole: {
+              select: {
+                GroupPermission: {
+                  select: {
+                    Permission: {
+                      select: {
+                        permission_key: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
     if (!user) throw new UnauthorizedException();
-    const is_correct_pwd = await this.stringService.compareHashSync(
-      signInDto.password,
-      user.user_password
-    );
-    if (!is_correct_pwd) throw new UnauthorizedException();
+
+    if (signInDto.password) {
+      const is_correct_pwd = await this.stringService.compareHashSync(
+        signInDto.password,
+        user.user_password
+      );
+      if (!is_correct_pwd) throw new UnauthorizedException();
+    }
 
     return {
       ...(await this.createToken({
         user_id: user.user_id,
         user_name: user.user_name,
+        permissions: user.Role.GroupRole.GroupPermission.reduce(
+          (acc, item) =>
+            acc.concat(item.Permission.map((per) => per.permission_key)),
+          []
+        ),
       })),
       user_name: user.user_name,
-      user_email: user.user_email,
-      role_id: user.role_id,
     };
   }
 
   async signUpWithGoogleOAuth2(user: GoogleUserDto) {
     if (!user) throw new UnauthorizedException('Not found user from google!');
 
-    const userFind = await this.userService.getFirstBy({
-      user_email: user.email,
-      user_type_login: TypeLogin.GOOGLE,
+    const userFind = await this.userService.getInstance().findFirst({
+      where: {
+        user_email: user.email,
+        user_type_login: TypeLogin.GOOGLE,
+      },
     });
 
     if (userFind)
-      return await this.signInWithGoogle({
+      return await this.signIn({
         user_name: userFind.user_name,
+        user_type_login: TypeLogin.GOOGLE,
       });
 
     return await this.signUp({
@@ -177,15 +179,17 @@ export class AuthService {
 
   async signUpWithGithub(user: GithubUserDto) {
     if (!user) throw new UnauthorizedException('Not found user from google!');
-
-    const userFind = await this.userService.getFirstBy({
-      user_email: user.email ?? user.user_name,
-      user_type_login: TypeLogin.GITHUB,
+    const userFind = await this.userService.getInstance().findFirst({
+      where: {
+        user_email: user.email ?? user.user_name,
+        user_type_login: TypeLogin.GITHUB,
+      },
     });
 
     if (userFind)
-      return await this.signInWithGoogle({
+      return await this.signIn({
         user_name: userFind.user_name,
+        user_type_login: TypeLogin.GITHUB,
       });
 
     return await this.signUp({
@@ -204,10 +208,15 @@ export class AuthService {
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
-    const user = await this.userService.getFirstBy([
-      { user_email: forgotPasswordDto.email },
-      { user_phone_number: forgotPasswordDto.phone_number },
-    ]);
+    const user = await this.userService.getInstance().findFirst({
+      where: {
+        OR: [
+          { user_email: forgotPasswordDto.email },
+          { user_phone_number: forgotPasswordDto.phone_number },
+        ],
+      },
+    });
+
     if (!user) throw new UnauthorizedException('Not found user');
 
     if (forgotPasswordDto.email) {
@@ -216,9 +225,7 @@ export class AuthService {
         subject: 'Reset password',
         template: MailTemplate.RESET_PASSWORD,
         context: {
-          redirect_to: `${this.configService.get(
-            EnvVars.URL_FE_SSO
-          )}/reset-password`,
+          redirect_to: forgotPasswordDto.redirect_to,
         },
       });
     } else {
