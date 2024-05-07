@@ -3,7 +3,10 @@ import { Request } from 'express';
 import { ApiResponse, FormatPagination } from './api.entity';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts';
-import { PATHS_NOT_AUTH } from 'src/consts/api.const';
+import {
+  PATHS_NOT_AUTH,
+  PATHS_NOT_CHECK_PERMISSION,
+} from 'src/consts/api.const';
 
 @Injectable()
 export class ApiService {
@@ -18,6 +21,16 @@ export class ApiService {
     path = this.removeQueryParameters(path);
     return PATHS_NOT_AUTH.includes(
       path.replace(this.configService.get(EnvVars.SERVER_PREFIX), '')
+    );
+  }
+
+  isPathNotCheckPermission(path: string) {
+    path = this.removeQueryParameters(path);
+    return (
+      this.isPathNotAuth(path) ||
+      PATHS_NOT_CHECK_PERMISSION.includes(
+        path.replace(this.configService.get(EnvVars.SERVER_PREFIX), '')
+      )
     );
   }
 

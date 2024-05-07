@@ -16,6 +16,7 @@ import {
 } from './dto/get-group-role.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { GroupPermissionService } from '../group-permission/group-permission.service';
+import { RoleService } from '../role/role.service';
 
 @Injectable()
 export class GroupRoleService
@@ -30,9 +31,14 @@ export class GroupRoleService
   constructor(
     private prismaService: PrismaService,
     private apiService: ApiService,
-    private groupPermissionService: GroupPermissionService
+    private groupPermissionService: GroupPermissionService,
+    private roleService: RoleService
   ) {}
-  async create({ group_permission_ids, ...dataCreate }: CreateGroupRoleDto) {
+  async create({
+    group_permission_ids,
+    role_ids,
+    ...dataCreate
+  }: CreateGroupRoleDto) {
     const dataGroupRole = await this.prismaService.groupRole.create({
       data: {
         ...dataCreate,
@@ -42,16 +48,35 @@ export class GroupRoleService
       group_role_id: dataGroupRole.group_role_id,
       group_permission_ids,
     });
+    await this.roleService.updateGroupRole({
+      group_role_id: dataGroupRole.group_role_id,
+      role_ids,
+    });
     return dataGroupRole;
   }
 
-  update({ group_role_id, ...dataUpdate }: UpdateGroupRoleDto) {
-    return this.prismaService.groupRole.update({
+  async update({
+    group_role_id,
+    group_permission_ids,
+    role_ids,
+    ...dataUpdate
+  }: UpdateGroupRoleDto) {
+    const dataGroupRole = await this.prismaService.groupRole.update({
       data: dataUpdate,
       where: {
         group_role_id,
       },
     });
+    await this.groupPermissionService.updateGroupRole({
+      group_role_id: dataGroupRole.group_role_id,
+      group_permission_ids,
+    });
+    await this.roleService.updateGroupRole({
+      group_role_id: dataGroupRole.group_role_id,
+      role_ids,
+    });
+
+    return dataGroupRole;
   }
   remove(ids: number[]) {
     return this.prismaService.groupRole.deleteMany({

@@ -86,6 +86,7 @@ model Permission {
   permission_name        String
   permission_description String?
   permission_key         String
+  permission_router      String
   created_at             DateTime         @default(now())
   updated_at             DateTime         @updatedAt
   GroupPermission        GroupPermission? @relation(fields: [group_permission_id], references: [group_permission_id])
@@ -93,14 +94,13 @@ model Permission {
 }
 
 model GroupPermission {
-  group_permission_id              Int          @id @default(autoincrement())
-  group_permission_name            String
-  group_permission_description     String?
-  group_permission_parent_id       Int?
-  group_permission_route_resources String?
-  created_at                       DateTime     @default(now())
-  updated_at                       DateTime     @updatedAt
-  Permission                       Permission[]
-  GroupRole                        GroupRole?   @relation(fields: [group_role_id], references: [group_role_id])
-  group_role_id                    Int?
+  group_permission_id          Int          @id @default(autoincrement())
+  group_permission_name        String
+  group_permission_description String?
+  group_permission_parent_id   Int?
+  created_at                   DateTime     @default(now())
+  updated_at                   DateTime     @updatedAt
+  Permission                   Permission[]
+  GroupRole                    GroupRole?   @relation(fields: [group_role_id], references: [group_role_id])
+  group_role_id                Int?
 }

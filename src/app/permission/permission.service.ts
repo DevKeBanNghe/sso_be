@@ -110,6 +110,7 @@ export class PermissionService
         permission_description: true,
         group_permission_id: true,
         permission_key: true,
+        permission_router: true,
       },
     });
     if (!permission) throw new BadRequestException('Permission not found');
@@ -143,6 +144,7 @@ export class PermissionService
         permission_name: true,
         permission_description: true,
         permission_key: true,
+        permission_router: true,
         GroupPermission: {
           select: {
             group_permission_name: true,

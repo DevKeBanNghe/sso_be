@@ -39,7 +39,6 @@ export class WebpageService
   }
 
   update({ webpage_id, ...dataUpdate }: UpdateWebpageDto) {
-    console.log('🚀 ~ update ~ dataUpdate:', dataUpdate);
     return this.prismaService.webpage.update({
       data: dataUpdate,
       where: {
@@ -93,6 +92,12 @@ export class WebpageService
         webpage_id: true,
         webpage_url: true,
         webpage_description: true,
+        GroupRole: {
+          select: {
+            group_role_id: true,
+            group_role_name: true,
+          },
+        },
       },
       skip,
       take: itemPerPage,

@@ -46,6 +46,7 @@ export class AllExceptionFilter implements ExceptionFilter {
         requestId: request.headers[HttpHeaders.REQUEST_ID],
         payload: JSON.stringify(this.apiService.getPayload(request)),
         errors: JSON.stringify(errors),
+        message: JSON.stringify(errors),
       });
 
       httpAdapter.reply(

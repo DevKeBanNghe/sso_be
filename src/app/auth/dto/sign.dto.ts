@@ -9,7 +9,7 @@ export class SignInDto extends IntersectionType(
 ) {}
 
 export class SignUpDto extends IntersectionType(
-  PickType(Auth, ['email', 'user_name', 'password']),
+  PickType(Auth, ['email', 'user_name']),
   PartialType(Auth),
   PartialType(User)
 ) {}

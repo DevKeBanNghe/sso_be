@@ -14,7 +14,7 @@ import {
   GetRoleOptionsDto,
 } from './dto/get-role.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
-import { UpdateRoleDto } from './dto/update-group-role.dto';
+import { UpdateGroupRoleDto, UpdateRoleDto } from './dto/update-group-role.dto';
 
 @Injectable()
 export class RoleService
@@ -122,6 +122,31 @@ export class RoleService
     return this.prismaService.role.create({
       data: {
         ...createDto,
+      },
+    });
+  }
+
+  private async removeGroupRoleExist(group_role_id: number) {
+    return this.prismaService.role.updateMany({
+      data: {
+        group_role_id: null,
+      },
+      where: {
+        group_role_id,
+      },
+    });
+  }
+
+  async updateGroupRole({ group_role_id, role_ids }: UpdateGroupRoleDto) {
+    await this.removeGroupRoleExist(group_role_id);
+    return this.prismaService.role.updateMany({
+      data: {
+        group_role_id,
+      },
+      where: {
+        role_id: {
+          in: role_ids,
+        },
       },
     });
   }

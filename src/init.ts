@@ -8,10 +8,10 @@ import { initSwagger } from './confs/swagger.confs';
 import { FormatResponseInterceptor } from './common/interceptors/format-response.interceptor';
 import { AllExceptionFilter } from './common/filters/all-exception.filter';
 import { ApiService } from './common/utils/api/api.service';
-import { HttpAdapterHost, Reflector } from '@nestjs/core';
+import { HttpAdapterHost } from '@nestjs/core';
 import { AccessControlGuard } from './common/guards/access-control.guard';
-import { RoleService } from './app/role/role.service';
 import { ParseParamsOptionPipe } from './common/pipes/parse-params-option.pipe';
+import { UserService } from './app/user/user.service';
 
 export const initApp = async (app: INestApplication) => {
   const configService = app.get(ConfigService);
@@ -29,7 +29,7 @@ export const initApp = async (app: INestApplication) => {
   const apiService = app.get(ApiService);
   app.useGlobalGuards(
     new AuthGuard(apiService),
-    new AccessControlGuard(app.get(RoleService))
+    new AccessControlGuard(configService, app.get(UserService), apiService)
   );
   app.useGlobalPipes(new ValidationPipe(), new ParseParamsOptionPipe());
   app.useGlobalInterceptors(

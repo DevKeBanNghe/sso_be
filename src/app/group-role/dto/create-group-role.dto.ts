@@ -6,4 +6,5 @@ export class CreateGroupRoleDto extends IntersectionType(
   PartialType(GroupRole)
 ) {
   group_permission_ids: number[];
+  role_ids: number[];
 }

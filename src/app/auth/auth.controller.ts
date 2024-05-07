@@ -110,6 +110,7 @@ export class AuthController {
   logout(@Res() res: Response) {
     res.clearCookie(COOKIE_ACCESS_TOKEN_KEY);
     res.clearCookie(COOKIE_REFRESH_TOKEN_KEY);
+    res.status(200).json({});
     return {};
   }
 

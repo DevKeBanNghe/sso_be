@@ -119,7 +119,6 @@ export class GroupPermissionService
           group_permission_name: true,
           group_permission_description: true,
           group_permission_parent_id: true,
-          group_permission_route_resources: true,
           Permission: {
             select: {
               permission_id: true,
