@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsString } from 'class-validator';
 
 export class Role {
   @IsNumber()
@@ -9,4 +9,6 @@ export class Role {
   role_description: string;
   @IsNumber()
   group_role_id: number;
+  @IsBoolean()
+  role_is_all_permissions: boolean;
 }

@@ -12,6 +12,8 @@ import { GoogleStrategy } from './strategies/google-oauth2.strategy';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { GithubStrategy } from './strategies/github.strategy';
+import { WebpageService } from '../webpage/webpage.service';
+import { SaveTokenInterceptor } from './interceptors/save-token.interceptor';
 @Module({
   imports: [
     UserModule,
@@ -63,6 +65,8 @@ import { GithubStrategy } from './strategies/github.strategy';
     GoogleStrategy,
     ConfigService,
     GithubStrategy,
+    WebpageService,
+    SaveTokenInterceptor,
   ],
   exports: [AuthService],
 })

@@ -21,3 +21,7 @@ export interface GetAllService<T = unknown> {
 export interface GetOptionsService<T = unknown> {
   getOptions(getOptionsDto?: T);
 }
+
+export interface GetInstanceService {
+  getInstance();
+}

@@ -4,8 +4,8 @@ import { EnvVars } from 'src/consts';
 @Controller()
 export class AppController {
   @Get()
-  @Redirect(process.env[EnvVars.URL_FE_SSO])
+  @Redirect(process.env[EnvVars.FE_URL])
   redirectToSSOFe() {
-    return { redirect_to: process.env[EnvVars.URL_FE_SSO] };
+    return { redirect_to: process.env[EnvVars.FE_URL] };
   }
 }

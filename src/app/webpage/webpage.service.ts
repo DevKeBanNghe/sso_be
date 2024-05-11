@@ -6,6 +6,7 @@ import {
   DeleteService,
   GetAllService,
   GetDetailService,
+  GetInstanceService,
   GetOptionsService,
   UpdateService,
 } from 'src/common/interfaces/service.interface';
@@ -24,12 +25,16 @@ export class WebpageService
     GetOptionsService<GetWebpageOptionsDto>,
     GetDetailService,
     DeleteService,
-    UpdateService<UpdateWebpageDto>
+    UpdateService<UpdateWebpageDto>,
+    GetInstanceService
 {
   constructor(
     private prismaService: PrismaService,
     private apiService: ApiService
   ) {}
+  getInstance() {
+    return this.prismaService.webpage;
+  }
   create(createDto: CreateWebpageDto) {
     return this.prismaService.webpage.create({
       data: {
@@ -62,6 +67,8 @@ export class WebpageService
         webpage_id: true,
         webpage_url: true,
         webpage_description: true,
+        webpage_key: true,
+        webpage_name: true,
       },
     });
     if (!Webpage) throw new BadRequestException('Group Webpage not found');
@@ -128,5 +135,10 @@ export class WebpageService
       },
       take: getOptionsDto.limit,
     });
+  }
+
+  async getWhiteList() {
+    const data = await this.getAll();
+    return data.map((item) => item.webpage_url);
   }
 }

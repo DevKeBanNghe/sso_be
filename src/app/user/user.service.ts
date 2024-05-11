@@ -1,10 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';
 import {
   CreateService,
   DeleteService,
   GetAllService,
   GetDetailService,
+  GetInstanceService,
   UpdateService,
 } from 'src/common/interfaces/service.interface';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,7 +24,8 @@ export class UserService
     UpdateService<UpdateUserDto>,
     GetAllService,
     GetDetailService,
-    DeleteService
+    DeleteService,
+    GetInstanceService
 {
   constructor(
     private prismaService: PrismaService,

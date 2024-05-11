@@ -26,14 +26,14 @@ export class AccessControlGuard {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const { getRequest } = context.switchToHttp();
-    const req = getRequest<Request>();
-    if (this.apiService.isPathNotCheckPermission(req.path)) return true;
-    const userRouterPermissions = await this.userService.getRouterPermissions(
-      req.body[KEY_FROM_DECODED_TOKEN].user_id
-    );
-    const currentRouter = this.getRouteHasParams(req);
-    if (!userRouterPermissions.includes(currentRouter)) return false;
+    // const { getRequest } = context.switchToHttp();
+    // const req = getRequest<Request>();
+    // if (this.apiService.isPathNotCheckPermission(req.path)) return true;
+    // const userRouterPermissions = await this.userService.getRouterPermissions(
+    //   req.body[KEY_FROM_DECODED_TOKEN].user_id
+    // );
+    // const currentRouter = this.getRouteHasParams(req);
+    // if (!userRouterPermissions.includes(currentRouter)) return false;
 
     return true;
   }

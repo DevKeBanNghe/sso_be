@@ -50,19 +50,22 @@ model Device {
 }
 
 model Role {
-  role_id          Int        @id @default(autoincrement())
-  role_name        String
-  role_description String?
-  created_at       DateTime   @default(now())
-  updated_at       DateTime   @updatedAt
-  User             User[]
-  GroupRole        GroupRole? @relation(fields: [group_role_id], references: [group_role_id])
-  group_role_id    Int?
+  role_id                 Int        @id @default(autoincrement())
+  role_name               String
+  role_description        String?
+  role_is_all_permissions Boolean    @default(false)
+  created_at              DateTime   @default(now())
+  updated_at              DateTime   @updatedAt
+  User                    User[]
+  GroupRole               GroupRole? @relation(fields: [group_role_id], references: [group_role_id])
+  group_role_id           Int?
 }
 
 model Webpage {
   webpage_id          Int         @id @default(autoincrement())
   webpage_url         String
+  webpage_name        String
+  webpage_key         String
   webpage_description String?
   GroupRole           GroupRole[]
 }

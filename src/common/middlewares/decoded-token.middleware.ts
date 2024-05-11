@@ -46,16 +46,11 @@ export class DecodedTokenMiddleware implements NestMiddleware {
     next();
   }
 
-  private getTokenFromHeaders(req: Request) {
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith('Bearer '))
-      return authHeader.substring(7, authHeader.length);
-  }
-
   async use(req: Request, res: Response, next: NextFunction) {
     if (this.apiService.isPathNotAuth(req.originalUrl)) return next();
     const access_token =
-      req.cookies[COOKIE_ACCESS_TOKEN_KEY] ?? this.getTokenFromHeaders(req);
+      req.cookies[COOKIE_ACCESS_TOKEN_KEY] ??
+      this.apiService.getTokenFromHeaders(req);
     if (!access_token) {
       const refresh_token = req.cookies[COOKIE_REFRESH_TOKEN_KEY];
       if (refresh_token) return this.handleRefreshToken(req, res, next);

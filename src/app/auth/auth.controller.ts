@@ -35,45 +35,57 @@ import { GithubUserDto } from './dto/github.dto';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly stringService: StringUtilService
+    private readonly stringUtilService: StringUtilService
   ) {}
 
   @Post('sign-in')
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(SaveTokenInterceptor)
-  async signIn(@Body() signInDto: SignInDto) {
-    return await this.authService.signIn(signInDto);
+  async signIn(@Body() { webpage_key, ...dataSingIn }: SignInDto) {
+    const data = await this.authService.signIn(dataSingIn);
+
+    if (!webpage_key) return data;
+    const webpage = await this.authService.getWebpageRedirect(webpage_key);
+    return {
+      ...data,
+      ...webpage,
+    };
   }
 
   @Post('sign-up')
   @UseInterceptors(SaveTokenInterceptor)
-  async signUp(@Body() signUpDto: SignUpDto) {
-    return await this.authService.signUp(signUpDto);
+  signUp(@Body() signUpDto: SignUpDto) {
+    return this.authService.signUp(signUpDto);
   }
 
   @Get('google')
   @Redirect('google-redirect')
   googleOAuth2Handle(@Res() res: Response, @Query() query: any) {
-    res.cookie(COOKIE_REDIRECT_KEY, query, {
-      httpOnly: true,
-      maxAge: this.stringService.toMS(COOKIE_REDIRECT_EXPIRE_IN),
-    });
+    const webpage_key = query.webpage_key;
+    if (webpage_key) {
+      res.cookie(COOKIE_REDIRECT_KEY, webpage_key, {
+        httpOnly: true,
+        maxAge: this.stringUtilService.toMS(COOKIE_REDIRECT_EXPIRE_IN),
+      });
+    }
   }
 
   @Get('google-redirect')
   @UseGuards(GoogleOAuth2Guard)
   @UseInterceptors(RedirectToInterceptor)
-  async signUpWithGoogleOAuth2(@Req() req: Request) {
-    const cookie_data = req.cookies[COOKIE_REDIRECT_KEY];
-    if (!cookie_data.from_url)
-      throw new UnauthorizedException('Sign up with google failed!');
-
+  async signUpWithGoogleOAuth2(@Req() req: Request, @Res() res: Response) {
     const data = await this.authService.signUpWithGoogleOAuth2(
       req.user as GoogleUserDto
     );
     if (!data) throw new UnauthorizedException('Sign up with google failed!');
 
-    return data;
+    const webpage_key = req.cookies[COOKIE_REDIRECT_KEY];
+    if (!webpage_key) return data;
+
+    const webpage = await this.authService.getWebpageRedirect(webpage_key);
+    if (!webpage) return data;
+
+    return { ...data, ...webpage };
   }
 
   @Get('github')
@@ -81,7 +93,7 @@ export class AuthController {
   githubHandle(@Res() res: Response, @Query() query: any) {
     res.cookie(COOKIE_REDIRECT_KEY, query, {
       httpOnly: true,
-      maxAge: this.stringService.toMS(COOKIE_REDIRECT_EXPIRE_IN),
+      maxAge: this.stringUtilService.toMS(COOKIE_REDIRECT_EXPIRE_IN),
     });
   }
 
@@ -89,16 +101,18 @@ export class AuthController {
   @UseGuards(GithubGuard)
   @UseInterceptors(RedirectToInterceptor)
   async signUpWithGithub(@Req() req: Request) {
-    const cookie_data = req.cookies[COOKIE_REDIRECT_KEY];
-    if (!cookie_data.from_url)
-      throw new UnauthorizedException('Sign up with github failed!');
-
     const data = await this.authService.signUpWithGithub(
       req.user as GithubUserDto
     );
     if (!data) throw new UnauthorizedException('Sign up with github failed!');
 
-    return data;
+    const webpage_key = req.cookies[COOKIE_REDIRECT_KEY];
+    if (!webpage_key) return data;
+
+    const webpage = await this.authService.getWebpageRedirect(webpage_key);
+
+    if (!webpage) return data;
+    return { ...data, ...webpage };
   }
 
   @Post('forgot-password')

@@ -8,6 +8,10 @@ import { Observable } from 'rxjs';
 import { Request, Response } from 'express';
 import { KEY_FROM_DECODED_TOKEN } from 'src/consts/jwt.const';
 import { ApiService } from '../utils/api/api.service';
+import {
+  COOKIE_ACCESS_TOKEN_KEY,
+  COOKIE_REFRESH_TOKEN_KEY,
+} from 'src/consts/cookie.const';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -22,8 +26,11 @@ export class AuthGuard implements CanActivate {
 
     if (this.apiService.isPathNotAuth(req.originalUrl)) return true;
 
-    if (!req.body[KEY_FROM_DECODED_TOKEN])
-      throw new UnauthorizedException(`Token is required`);
+    const token =
+      req.cookies[COOKIE_ACCESS_TOKEN_KEY] ??
+      req.cookies[COOKIE_REFRESH_TOKEN_KEY] ??
+      this.apiService.getTokenFromHeaders(req);
+    if (!token) throw new UnauthorizedException(`Token is required`);
 
     return true;
   }

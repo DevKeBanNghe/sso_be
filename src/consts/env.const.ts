@@ -7,8 +7,7 @@ export enum EnvVars {
   API_VERSION = 'API_VERSION',
   APP_URL = 'APP_URL',
   SERVER_PREFIX = 'SERVER_PREFIX',
-  WHITE_LIST = 'WHITE_LIST',
-  URL_FE_SSO = 'URL_FE_SSO',
+  FE_URL = 'FE_URL',
   JWT_SECRET_KEY = 'JWT_SECRET_KEY',
 }
 export enum WinstonEnvs {

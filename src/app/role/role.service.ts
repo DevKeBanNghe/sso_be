@@ -70,6 +70,7 @@ export class RoleService
         role_name: true,
         role_description: true,
         group_role_id: true,
+        role_is_all_permissions: true,
       },
     });
     if (!role) throw new BadRequestException('Role not found');

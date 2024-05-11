@@ -14,10 +14,12 @@
     "pris-init-pg": "cross-env DBNAME=postgresql npm run pris-init",
     "pris-init-mongo": "cross-env DBNAME=mongodb npm run pris-init",
     "pris-mig": "cross-env-shell prisma migrate dev --name=$DBNAME --schema=./prisma/schema.$DBNAME.prisma",
-    "pris-mig-pg": "cross-env DBNAME=postgresql npm run pris-mig",
+    "pris-mig-pg": "cross-env DBNAME=postgresql npm run pris-mig && npm run pris-gen-pg",
     "pris-push": "cross-env-shell prisma db push --schema=./prisma/schema.$DBNAME.prisma",
     "pris-push-mongo": "cross-env DBNAME=mongodb npm run pris-push",
     "pris-mig-db": "npm run pris-mig-pg && npm run pris-push-mongo",
+    "pris-gen": "cross-env-shell prisma generate --schema=./prisma/schema.$DBNAME.prisma",
+    "pris-gen-pg": "cross-env DBNAME=postgresql npm run pris-gen",
     "init-husky": "husky && type husky-prepare\\pre-commit > .husky/pre-commit && type husky-prepare\\commit-msg > .husky/commit-msg",
     "postinstall": "(if exist .husky rmdir /s /q .husky) && npm run init-husky"
   },

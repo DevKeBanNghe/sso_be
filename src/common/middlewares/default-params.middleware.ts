@@ -7,13 +7,13 @@ import { EnvVars, HttpHeaders } from 'src/consts';
 @Injectable()
 export class DefaultParamsMiddleware implements NestMiddleware {
   constructor(
-    private stringService: StringUtilService,
+    private stringUtilService: StringUtilService,
     private configService: ConfigService
   ) {}
   private setHeaders(headers: IncomingHttpHeaders) {
     const instance = {
       [HttpHeaders.REQUEST_ID]:
-        headers[HttpHeaders.REQUEST_ID] ?? this.stringService.genRandom(),
+        headers[HttpHeaders.REQUEST_ID] ?? this.stringUtilService.genRandom(),
       [HttpHeaders.VERSION]:
         headers[HttpHeaders.VERSION] ??
         this.configService.get(EnvVars.API_VERSION),

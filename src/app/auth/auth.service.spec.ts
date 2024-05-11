@@ -21,6 +21,9 @@ describe('AuthService', () => {
 
       const result = {
         user_name: 'trung',
+        permissions: [],
+        isAdmin: true,
+        user_id: 1,
       };
 
       const { access_token, refresh_token, ...user_data } =

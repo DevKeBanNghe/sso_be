@@ -55,4 +55,10 @@ export class ApiService {
   formatPagination<T>(formatPagination: FormatPagination<T>) {
     return new FormatPagination<T>(formatPagination);
   }
+
+  getTokenFromHeaders(req: Request) {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer '))
+      return authHeader.substring(7, authHeader.length);
+  }
 }

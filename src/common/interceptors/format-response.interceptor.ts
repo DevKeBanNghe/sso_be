@@ -7,6 +7,7 @@ import {
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../utils/api/api.service';
 import { Request, Response } from 'express';
+import { isPromise } from 'util/types';
 
 @Injectable()
 export class FormatResponseInterceptor implements NestInterceptor {
@@ -17,10 +18,10 @@ export class FormatResponseInterceptor implements NestInterceptor {
     const res = getResponse<Response>();
 
     return next.handle().pipe(
-      map((data) => {
+      map(async (data) => {
         return this.apiService.formatResponse({
           path: req.path,
-          data,
+          data: data instanceof Promise ? await data : data,
         });
       })
     );

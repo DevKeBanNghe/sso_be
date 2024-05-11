@@ -12,18 +12,19 @@ import { HttpAdapterHost } from '@nestjs/core';
 import { AccessControlGuard } from './common/guards/access-control.guard';
 import { ParseParamsOptionPipe } from './common/pipes/parse-params-option.pipe';
 import { UserService } from './app/user/user.service';
+import { WebpageService } from './app/webpage/webpage.service';
 
 export const initApp = async (app: INestApplication) => {
   const configService = app.get(ConfigService);
-  const { white_list } = configService.get(EnvVars.ENV_LAZY_LOAD);
   app.setGlobalPrefix(configService.get(EnvVars.SERVER_PREFIX));
   app.enableVersioning({
     type: VersioningType.HEADER,
     header: HttpHeaders.VERSION,
     defaultVersion: configService.get(EnvVars.API_VERSION),
   });
+  const webpage_allowed = await app.get(WebpageService).getWhiteList();
   app.enableCors({
-    origin: white_list,
+    origin: [configService.get(EnvVars.FE_URL), ...webpage_allowed],
     credentials: true,
   });
   const apiService = app.get(ApiService);

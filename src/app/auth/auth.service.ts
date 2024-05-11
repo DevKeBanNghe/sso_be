@@ -17,15 +17,17 @@ import { MailTemplate } from 'src/consts/mail.const';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
 import { JwtService } from '@nestjs/jwt';
 import { GithubUserDto } from './dto/github.dto';
+import { WebpageService } from '../webpage/webpage.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
-    private stringService: StringUtilService,
+    private stringUtilService: StringUtilService,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private readonly mailerService: MailerService
+    private readonly mailerService: MailerService,
+    private readonly webpageService: WebpageService
   ) {}
 
   private readonly VERIFY_PASSWORD_EXPIRE_IN = '5m';
@@ -70,11 +72,12 @@ export class AuthService {
 
     if (user) throw new BadRequestException('Information has been registered!');
 
-    signUpDto.password = signUpDto.password ?? this.stringService.genRandom();
+    signUpDto.password =
+      signUpDto.password ?? this.stringUtilService.genRandom();
 
     const userCreated = await this.userService.create({
       user_email: signUpDto.email,
-      user_password: await this.stringService.hashSync(signUpDto.password),
+      user_password: await this.stringUtilService.hashSync(signUpDto.password),
       user_name: signUpDto.user_name,
       user_first_name: signUpDto.user_first_name,
       user_last_name: signUpDto.user_last_name,
@@ -105,7 +108,10 @@ export class AuthService {
     if (signInDto.password) delete conditionFindUser.user_type_login;
     const user = await this.userService.getInstance().findFirst({
       where: conditionFindUser,
-      include: {
+      select: {
+        user_id: true,
+        user_name: true,
+        user_password: true,
         Role: {
           select: {
             GroupRole: {
@@ -121,6 +127,7 @@ export class AuthService {
                 },
               },
             },
+            role_is_all_permissions: true,
           },
         },
       },
@@ -129,24 +136,27 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
 
     if (signInDto.password) {
-      const is_correct_pwd = await this.stringService.compareHashSync(
+      const is_correct_pwd = await this.stringUtilService.compareHashSync(
         signInDto.password,
         user.user_password
       );
       if (!is_correct_pwd) throw new UnauthorizedException();
     }
 
-    return {
-      ...(await this.createToken({
-        user_id: user.user_id,
-        user_name: user.user_name,
-        permissions: user.Role.GroupRole.GroupPermission.reduce(
+    const { user_password, Role, ...userData } = user;
+    const data = {
+      ...userData,
+      isAdmin: Role?.role_is_all_permissions ? true : false,
+      permissions:
+        Role?.GroupRole?.GroupPermission?.reduce(
           (acc, item) =>
             acc.concat(item.Permission.map((per) => per.permission_key)),
           []
-        ),
-      })),
-      user_name: user.user_name,
+        ) ?? [],
+    };
+    return {
+      ...(await this.createToken(data)),
+      ...data,
     };
   }
 
@@ -232,7 +242,7 @@ export class AuthService {
       this.sendSMS();
     }
 
-    const code_reset = this.stringService.encrypt(
+    const code_reset = this.stringUtilService.encrypt(
       {
         user_id: user.user_id,
       },
@@ -242,15 +252,27 @@ export class AuthService {
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
-    const decoded = this.stringService.decrypt(resetPasswordDto.code_reset);
+    const decoded = this.stringUtilService.decrypt(resetPasswordDto.code_reset);
 
     if (!decoded) throw new BadRequestException('Reset password failed');
 
     return await this.userService.update({
       user_id: decoded.user_id,
-      user_password: await this.stringService.hashSync(
+      user_password: await this.stringUtilService.hashSync(
         resetPasswordDto.password
       ),
     });
+  }
+
+  async getWebpageRedirect(webpage_key: string) {
+    const webpage = await this.webpageService.getInstance().findFirst({
+      select: {
+        webpage_url: true,
+      },
+      where: {
+        webpage_key,
+      },
+    });
+    return webpage;
   }
 }

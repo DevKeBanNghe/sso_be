@@ -2,7 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { getEnvs, validationSchema } from 'src/confs/env.confs';
+import { validationSchema } from 'src/confs/env.confs';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { UserModule } from './user/user.module';
@@ -28,7 +28,6 @@ import { WebpageModule } from './webpage/webpage.module';
       envFilePath: ['.env'],
       isGlobal: true,
       expandVariables: true,
-      load: [getEnvs],
       validationSchema,
     }),
     ThrottlerModule.forRootAsync({

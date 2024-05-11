@@ -1,22 +1,28 @@
 import { CallHandler, ExecutionContext, Injectable } from '@nestjs/common';
-import { map, Observable } from 'rxjs';
+import { map } from 'rxjs';
 import { SaveTokenInterceptor } from './save-token.interceptor';
 import { COOKIE_REDIRECT_KEY } from 'src/consts/cookie.const';
 import { Request, Response } from 'express';
-import { WebRedirectDto } from '../dto/web.dto';
 
 @Injectable()
-export class RedirectToInterceptor extends SaveTokenInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+export class RedirectToInterceptor {
+  constructor(private saveTokenInterceptor: SaveTokenInterceptor) {}
+  intercept(context: ExecutionContext, next: CallHandler) {
     const { getRequest, getResponse } = context.switchToHttp();
     const req = getRequest<Request>();
     const res = getResponse<Response>();
     return next.handle().pipe(
-      map((data) => {
-        super.setTokenToCookie(res, data);
-        const cookie_data = req.cookies[COOKIE_REDIRECT_KEY] as WebRedirectDto;
+      map(async (data) => {
+        this.saveTokenInterceptor.setTokenToCookie(res, data);
         res.clearCookie(COOKIE_REDIRECT_KEY);
-        if (cookie_data?.from_url) res.redirect(cookie_data.from_url);
+        const webpage_url = data.webpage_url;
+        if (webpage_url) {
+          try {
+            res.redirect(webpage_url);
+          } catch (error) {
+            console.log('🚀 ~ RedirectToInterceptor ~ map ~ error:', error);
+          }
+        }
         return data;
       })
     );
