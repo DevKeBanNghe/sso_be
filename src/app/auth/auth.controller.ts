@@ -3,8 +3,6 @@ import {
   Post,
   Body,
   UseInterceptors,
-  HttpCode,
-  HttpStatus,
   Req,
   UseGuards,
   Get,
@@ -14,32 +12,33 @@ import {
   Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignInDto, SignUpDto } from './dto/sign.dto';
-import { StringUtilService } from 'src/common/utils/string/string-util.service';
+import {
+  GithubUserDto,
+  GoogleUserDto,
+  SignInDto,
+  SignUpDto,
+} from './dto/sign.dto';
 import { SaveTokenInterceptor } from './interceptors/save-token.interceptor';
 import { GoogleOAuth2Guard } from './guards/google-oauth2.guard';
 import { Request, Response } from 'express';
-import { GoogleUserDto } from './dto/google-oauth2.dto';
 import {
   COOKIE_ACCESS_TOKEN_KEY,
-  COOKIE_REDIRECT_EXPIRE_IN,
   COOKIE_REDIRECT_KEY,
   COOKIE_REFRESH_TOKEN_KEY,
 } from 'src/consts/cookie.const';
 import { RedirectToInterceptor } from './interceptors/redirect-to.interceptor';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
 import { GithubGuard } from './guards/github.guard';
-import { GithubUserDto } from './dto/github.dto';
+import { ApiService } from 'src/common/utils/api/api.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly stringUtilService: StringUtilService
+    private readonly apiService: ApiService
   ) {}
 
   @Post('sign-in')
-  @HttpCode(HttpStatus.OK)
   @UseInterceptors(SaveTokenInterceptor)
   async signIn(@Body() { webpage_key, ...dataSingIn }: SignInDto) {
     const data = await this.authService.signIn(dataSingIn);
@@ -60,20 +59,17 @@ export class AuthController {
 
   @Get('google')
   @Redirect('google-redirect')
-  googleOAuth2Handle(@Res() res: Response, @Query() query: any) {
-    const webpage_key = query.webpage_key;
-    if (webpage_key) {
-      res.cookie(COOKIE_REDIRECT_KEY, webpage_key, {
-        httpOnly: true,
-        maxAge: this.stringUtilService.toMS(COOKIE_REDIRECT_EXPIRE_IN),
-      });
-    }
+  googleOAuth2Handle(
+    @Res() res: Response,
+    @Query('webpage_key') webpage_key: string
+  ) {
+    return this.authService.googleOAuth2Handle({ res, webpage_key });
   }
 
   @Get('google-redirect')
   @UseGuards(GoogleOAuth2Guard)
   @UseInterceptors(RedirectToInterceptor)
-  async signUpWithGoogleOAuth2(@Req() req: Request, @Res() res: Response) {
+  async signUpWithGoogleOAuth2(@Req() req: Request) {
     const data = await this.authService.signUpWithGoogleOAuth2(
       req.user as GoogleUserDto
     );
@@ -90,11 +86,11 @@ export class AuthController {
 
   @Get('github')
   @Redirect('github-redirect')
-  githubHandle(@Res() res: Response, @Query() query: any) {
-    res.cookie(COOKIE_REDIRECT_KEY, query, {
-      httpOnly: true,
-      maxAge: this.stringUtilService.toMS(COOKIE_REDIRECT_EXPIRE_IN),
-    });
+  githubHandle(
+    @Res() res: Response,
+    @Query('webpage_key') webpage_key: string
+  ) {
+    return this.authService.githubHandle({ res, webpage_key });
   }
 
   @Get('github-redirect')
@@ -131,5 +127,15 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return await this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Get('refresh-token')
+  @UseInterceptors(SaveTokenInterceptor)
+  async refreshToken(@Req() req: Request) {
+    const token =
+      req.cookies[COOKIE_REFRESH_TOKEN_KEY] ??
+      this.apiService.getBearerToken(req.headers);
+    if (!token) throw new UnauthorizedException('Token is required');
+    return this.authService.refreshToken(token);
   }
 }

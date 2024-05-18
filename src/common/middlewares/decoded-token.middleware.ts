@@ -5,66 +5,33 @@ import {
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { KEY_FROM_DECODED_TOKEN } from 'src/consts/jwt.const';
-import { TokenExpiredError } from '@nestjs/jwt';
 import { ApiService } from '../utils/api/api.service';
 import { AuthService } from 'src/app/auth/auth.service';
-import { SaveTokenInterceptor } from 'src/app/auth/interceptors/save-token.interceptor';
-import {
-  COOKIE_ACCESS_TOKEN_KEY,
-  COOKIE_REFRESH_TOKEN_KEY,
-} from 'src/consts/cookie.const';
+import { TokenExpiredError } from '@nestjs/jwt';
+import { COOKIE_ACCESS_TOKEN_KEY } from 'src/consts/cookie.const';
 
 @Injectable()
 export class DecodedTokenMiddleware implements NestMiddleware {
   constructor(
     private apiService: ApiService,
-    private authService: AuthService,
-    private saveTokenInterceptor: SaveTokenInterceptor
+    private authService: AuthService
   ) {}
-
-  private async handleRefreshToken(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    const refresh_token = req.cookies[COOKIE_REFRESH_TOKEN_KEY];
-    if (!refresh_token)
-      return next(new UnauthorizedException('Refresh token is required'));
-
-    const { decoded, error } = await this.authService.verifyToken(
-      refresh_token
-    );
-    if (error) return next(error);
-
-    const { exp, ...payload } = decoded;
-    // Set new token to cookie
-    this.saveTokenInterceptor.setTokenToCookie(
-      res,
-      await this.authService.createToken(payload)
-    );
-    req.body[KEY_FROM_DECODED_TOKEN] = payload;
-    next();
-  }
 
   async use(req: Request, res: Response, next: NextFunction) {
     if (this.apiService.isPathNotAuth(req.originalUrl)) return next();
-    const access_token =
+    const token =
       req.cookies[COOKIE_ACCESS_TOKEN_KEY] ??
-      this.apiService.getTokenFromHeaders(req);
-    if (!access_token) {
-      const refresh_token = req.cookies[COOKIE_REFRESH_TOKEN_KEY];
-      if (refresh_token) return this.handleRefreshToken(req, res, next);
-      return next(new UnauthorizedException('Token is required'));
+      this.apiService.getBearerToken(req.headers);
+
+    if (!token) {
+      throw new UnauthorizedException('Token is required');
     }
 
-    const { decoded, error } = await this.authService.verifyToken(access_token);
-    if (decoded) {
-      const { exp, ...payload } = decoded;
-      req.body[KEY_FROM_DECODED_TOKEN] = payload;
-      return next();
-    }
+    const { decoded, error } = await this.authService.verifyToken(token);
+    if (error) throw error;
 
-    if (!(error instanceof TokenExpiredError)) return next(error);
-    this.handleRefreshToken(req, res, next);
+    const { exp, ...payload } = decoded;
+    req.body[KEY_FROM_DECODED_TOKEN] = payload;
+    return next();
   }
 }

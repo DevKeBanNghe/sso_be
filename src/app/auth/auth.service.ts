@@ -6,18 +6,26 @@ import {
 import { UserService } from '../user/user.service';
 import { StringUtilService } from 'src/common/utils/string/string-util.service';
 import { TokenExpireIn } from 'src/consts/jwt.const';
-import { SignInDto, SignUpDto } from './dto/sign.dto';
+import {
+  GithubUserDto,
+  GoogleUserDto,
+  SignInDto,
+  SignUpDto,
+  SocialsSignDto,
+} from './dto/sign.dto';
 import { AuthToken } from './types/token.type';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts';
-import { GoogleUserDto } from './dto/google-oauth2.dto';
 import { TypeLogin } from '../user/entities/user.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import { MailTemplate } from 'src/consts/mail.const';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
-import { JwtService } from '@nestjs/jwt';
-import { GithubUserDto } from './dto/github.dto';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { WebpageService } from '../webpage/webpage.service';
+import {
+  COOKIE_REDIRECT_EXPIRE_IN,
+  COOKIE_REDIRECT_KEY,
+} from 'src/consts/cookie.const';
 
 @Injectable()
 export class AuthService {
@@ -42,6 +50,8 @@ export class AuthService {
       });
       return { decoded, error: null };
     } catch (error) {
+      if (error instanceof TokenExpiredError)
+        throw new UnauthorizedException(error);
       return { decoded: null, error };
     }
   }
@@ -143,7 +153,7 @@ export class AuthService {
       if (!is_correct_pwd) throw new UnauthorizedException();
     }
 
-    const { user_password, Role, ...userData } = user;
+    const { user_password, Role, user_id, ...userData } = user;
     const data = {
       ...userData,
       isAdmin: Role?.role_is_all_permissions ? true : false,
@@ -155,7 +165,7 @@ export class AuthService {
         ) ?? [],
     };
     return {
-      ...(await this.createToken(data)),
+      ...(await this.createToken({ ...data, user_id })),
       ...data,
     };
   }
@@ -274,5 +284,26 @@ export class AuthService {
       },
     });
     return webpage;
+  }
+
+  async refreshToken(token: string) {
+    const { decoded, error } = await this.verifyToken(token);
+    if (error) throw error;
+    const { exp, ...payload } = decoded;
+    return await this.createToken(payload);
+  }
+
+  private saveWebpageKeyToCookie({ webpage_key, res }: SocialsSignDto) {
+    res.cookie(COOKIE_REDIRECT_KEY, webpage_key, {
+      httpOnly: true,
+      maxAge: this.stringUtilService.toMS(COOKIE_REDIRECT_EXPIRE_IN),
+    });
+  }
+  googleOAuth2Handle({ webpage_key, res }: SocialsSignDto) {
+    return this.saveWebpageKeyToCookie({ webpage_key, res });
+  }
+
+  githubHandle({ webpage_key, res }: SocialsSignDto) {
+    return this.saveWebpageKeyToCookie({ webpage_key, res });
   }
 }

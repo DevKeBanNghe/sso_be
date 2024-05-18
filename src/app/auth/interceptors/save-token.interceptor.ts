@@ -18,16 +18,16 @@ import {
 export class SaveTokenInterceptor implements NestInterceptor {
   constructor(protected stringUtilService: StringUtilService) {}
 
-  setTokenToCookie(res: Response, data: AuthToken) {
-    if (data.access_token)
-      res.cookie(COOKIE_ACCESS_TOKEN_KEY, data.access_token, {
+  setTokenToCookie(res: Response, { access_token, refresh_token }: AuthToken) {
+    if (access_token)
+      res.cookie(COOKIE_ACCESS_TOKEN_KEY, access_token, {
         httpOnly: true,
         maxAge: this.stringUtilService.toMS(
           TokenExpireIn.COOKIE_ACCESS_TOKEN_EXPIRE_IN
         ),
       });
-    if (data.refresh_token)
-      res.cookie(COOKIE_REFRESH_TOKEN_KEY, data.refresh_token, {
+    if (refresh_token)
+      res.cookie(COOKIE_REFRESH_TOKEN_KEY, refresh_token, {
         httpOnly: true,
         maxAge: this.stringUtilService.toMS(
           TokenExpireIn.COOKIE_REFRESH_TOKEN_EXPIRE_IN

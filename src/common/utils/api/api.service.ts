@@ -7,6 +7,7 @@ import {
   PATHS_NOT_AUTH,
   PATHS_NOT_CHECK_PERMISSION,
 } from 'src/consts/api.const';
+import { IncomingHttpHeaders } from 'http';
 
 @Injectable()
 export class ApiService {
@@ -56,8 +57,8 @@ export class ApiService {
     return new FormatPagination<T>(formatPagination);
   }
 
-  getTokenFromHeaders(req: Request) {
-    const authHeader = req.headers.authorization;
+  getBearerToken(headers: IncomingHttpHeaders) {
+    const authHeader = headers.authorization;
     if (authHeader?.startsWith('Bearer '))
       return authHeader.substring(7, authHeader.length);
   }
