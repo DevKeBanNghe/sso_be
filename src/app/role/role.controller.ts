@@ -11,7 +11,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { RoleService } from './role.service';
-import { CreateRoleDto } from './dto/create-group-role.dto';
+import { CreateRoleDto } from './dto/create-role.dto';
 import { ClearDecodedDataPipe } from 'src/common/pipes/clear-decoded-data.pipe';
 import {
   GetRoleListByPaginationDto,
@@ -19,7 +19,7 @@ import {
 } from './dto/get-role.dto';
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
 import { ParseIntArrayPipe } from 'src/common/pipes/parse-int-array.pipe';
-import { UpdateRoleDto } from './dto/update-group-role.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
 
 @Controller('roles')
 export class RoleController {

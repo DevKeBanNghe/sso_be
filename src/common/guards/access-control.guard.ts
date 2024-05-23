@@ -14,9 +14,11 @@ export class AccessControlGuard {
     private apiService: ApiService
   ) {}
 
-  getRouteHasParams(req: Request) {
-    let routeHasParams = req.path;
-    for (const [key, value] of Object.entries(req.params)) {
+  private req: Request;
+
+  getRouteHasParams() {
+    let routeHasParams = this.req.path;
+    for (const [key, value] of Object.entries(this.req.params)) {
       routeHasParams = routeHasParams.replace(value, `:${key}`);
     }
     return routeHasParams.replace(
@@ -25,16 +27,27 @@ export class AccessControlGuard {
     );
   }
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    // const { getRequest } = context.switchToHttp();
-    // const req = getRequest<Request>();
-    // if (this.apiService.isPathNotCheckPermission(req.path)) return true;
-    // const userRouterPermissions = await this.userService.getRouterPermissions(
-    //   req.body[KEY_FROM_DECODED_TOKEN].user_id
-    // );
-    // const currentRouter = this.getRouteHasParams(req);
-    // if (!userRouterPermissions.includes(currentRouter)) return false;
+  private async isValidRouteAccess(user_id: number) {
+    const isAdmin = await this.userService.isAdmin(user_id);
+    if (isAdmin) return true;
 
-    return true;
+    const userRouterPermissions = await this.userService.getRoutersPermission(
+      user_id
+    );
+    const currentRouter = this.getRouteHasParams();
+    return userRouterPermissions.includes(currentRouter);
+  }
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const { getRequest } = context.switchToHttp();
+    const req = getRequest<Request>();
+    this.req = req;
+    if (this.apiService.isPathNotCheckPermission(req.path)) return true;
+    const user_id = req.body[KEY_FROM_DECODED_TOKEN].user_id;
+
+    const isValid = await this.isValidRouteAccess(user_id);
+    if (isValid) return true;
+
+    return false;
   }
 }

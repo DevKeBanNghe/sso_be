@@ -14,11 +14,13 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 import { GithubStrategy } from './strategies/github.strategy';
 import { WebpageService } from '../webpage/webpage.service';
 import { SaveTokenInterceptor } from './interceptors/save-token.interceptor';
+import { WebpageModule } from '../webpage/webpage.module';
 @Module({
   imports: [
     UserModule,
     ApiModule,
     ConfigModule,
+    WebpageModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -65,7 +67,6 @@ import { SaveTokenInterceptor } from './interceptors/save-token.interceptor';
     GoogleStrategy,
     ConfigService,
     GithubStrategy,
-    WebpageService,
     SaveTokenInterceptor,
   ],
   exports: [AuthService],

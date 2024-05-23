@@ -7,14 +7,14 @@ import {
   GetOptionsService,
   UpdateService,
 } from 'src/common/interfaces/service.interface';
-import { CreateRoleDto } from './dto/create-group-role.dto';
+import { CreateRoleDto } from './dto/create-role.dto';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';
 import {
   GetRoleListByPaginationDto,
   GetRoleOptionsDto,
 } from './dto/get-role.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
-import { UpdateGroupRoleDto, UpdateRoleDto } from './dto/update-group-role.dto';
+import { UpdateRoleDto, UpdateWebpageDto } from './dto/update-role.dto';
 
 @Injectable()
 export class RoleService
@@ -53,8 +53,22 @@ export class RoleService
       },
     });
   }
-  remove(ids: number[]) {
-    return this.prismaService.role.deleteMany({
+
+  removeRoleChildren(role_parent_ids: number[]) {
+    return this.prismaService.role.updateMany({
+      data: {
+        role_parent_id: null,
+      },
+      where: {
+        role_parent_id: {
+          in: role_parent_ids,
+        },
+      },
+    });
+  }
+  async remove(ids: number[]) {
+    await this.removeRoleChildren(ids);
+    return await this.prismaService.role.deleteMany({
       where: {
         role_id: {
           in: ids,
@@ -69,8 +83,7 @@ export class RoleService
         role_id: true,
         role_name: true,
         role_description: true,
-        group_role_id: true,
-        role_is_all_permissions: true,
+        role_parent_id: true,
       },
     });
     if (!role) throw new BadRequestException('Role not found');
@@ -93,15 +106,17 @@ export class RoleService
 
   async getListByPagination({ page, itemPerPage }: GetRoleListByPaginationDto) {
     const skip = (page - 1) * itemPerPage;
+    const fieldsSelectDefault = {
+      role_id: true,
+      role_name: true,
+      role_description: true,
+    };
     const list = await this.prismaService.role.findMany({
       select: {
-        role_id: true,
-        role_name: true,
-        role_description: true,
-        GroupRole: {
+        ...fieldsSelectDefault,
+        children: {
           select: {
-            group_role_id: true,
-            group_role_name: true,
+            ...fieldsSelectDefault,
           },
         },
       },
@@ -113,7 +128,15 @@ export class RoleService
     });
 
     return this.apiService.formatPagination<typeof list>({
-      list,
+      list: list.map((item) => ({
+        ...item,
+        children: item.children.length
+          ? item.children.map((child) => ({
+              ...child,
+              key: `role_child_${child.role_id}`,
+            }))
+          : null,
+      })),
       totalItems: await this.prismaService.role.count(),
       page,
       itemPerPage,
@@ -127,22 +150,22 @@ export class RoleService
     });
   }
 
-  private async removeGroupRoleExist(group_role_id: number) {
+  private async removeWebpageExist(webpage_id: number) {
     return this.prismaService.role.updateMany({
       data: {
-        group_role_id: null,
+        webpage_id: null,
       },
       where: {
-        group_role_id,
+        webpage_id,
       },
     });
   }
 
-  async updateGroupRole({ group_role_id, role_ids }: UpdateGroupRoleDto) {
-    await this.removeGroupRoleExist(group_role_id);
+  async updateWebpage({ webpage_id, role_ids }: UpdateWebpageDto) {
+    await this.removeWebpageExist(webpage_id);
     return this.prismaService.role.updateMany({
       data: {
-        group_role_id,
+        webpage_id,
       },
       where: {
         role_id: {

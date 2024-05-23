@@ -21,11 +21,9 @@ describe('AuthService', () => {
 
       const result = {
         user_name: 'trung',
-        permissions: [],
-        isAdmin: true,
       };
 
-      const { access_token, refresh_token, ...user_data } =
+      const { access_token, refresh_token, permissions, ...user_data } =
         await service.signIn(signInDto);
       expect(user_data).toEqual(result);
     });

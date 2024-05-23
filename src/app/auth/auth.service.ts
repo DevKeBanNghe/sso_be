@@ -116,6 +116,17 @@ export class AuthService {
       user_type_login: signInDto.user_type_login ?? TypeLogin.ACCOUNT,
     };
     if (signInDto.password) delete conditionFindUser.user_type_login;
+    const defaultPermissionSelect = {
+      RolePermission: {
+        select: {
+          Permission: {
+            select: {
+              permission_key: true,
+            },
+          },
+        },
+      },
+    };
     const user = await this.userService.getInstance().findFirst({
       where: conditionFindUser,
       select: {
@@ -124,20 +135,12 @@ export class AuthService {
         user_password: true,
         Role: {
           select: {
-            GroupRole: {
+            ...defaultPermissionSelect,
+            children: {
               select: {
-                GroupPermission: {
-                  select: {
-                    Permission: {
-                      select: {
-                        permission_key: true,
-                      },
-                    },
-                  },
-                },
+                ...defaultPermissionSelect,
               },
             },
-            role_is_all_permissions: true,
           },
         },
       },
@@ -153,16 +156,25 @@ export class AuthService {
       if (!is_correct_pwd) throw new UnauthorizedException();
     }
 
-    const { user_password, Role, user_id, ...userData } = user;
+    const {
+      user_password,
+      Role: { RolePermission, children },
+      user_id,
+      ...userData
+    } = user;
+    const permissionKey = RolePermission.map(
+      (item) => item.Permission.permission_key
+    );
+    const permissionKeyChildren = children.reduce(
+      (acc, { RolePermission }) =>
+        acc.concat(
+          RolePermission.map((item) => item.Permission.permission_key)
+        ),
+      []
+    );
     const data = {
       ...userData,
-      isAdmin: Role?.role_is_all_permissions ? true : false,
-      permissions:
-        Role?.GroupRole?.GroupPermission?.reduce(
-          (acc, item) =>
-            acc.concat(item.Permission.map((per) => per.permission_key)),
-          []
-        ) ?? [],
+      permissions: [...permissionKey, ...permissionKeyChildren],
     };
     return {
       ...(await this.createToken({ ...data, user_id })),

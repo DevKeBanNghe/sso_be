@@ -31,6 +31,9 @@ export class UserService
     private prismaService: PrismaService,
     private apiService: ApiService
   ) {}
+
+  private readonly KEY_SYSTEM: string = 'SYS_ALL';
+
   remove(ids: number[]) {
     return this.prismaService.user.deleteMany({
       where: {
@@ -114,22 +117,26 @@ export class UserService
     });
   }
 
-  async getRouterPermissions(user_id: number) {
+  async getRoutersPermission(user_id: number) {
+    const defaultSelect = {
+      RolePermission: {
+        select: {
+          Permission: {
+            select: {
+              permission_router: true,
+            },
+          },
+        },
+      },
+    };
     const data = await this.prismaService.user.findFirst({
       select: {
         Role: {
           select: {
-            GroupRole: {
+            ...defaultSelect,
+            children: {
               select: {
-                GroupPermission: {
-                  select: {
-                    Permission: {
-                      select: {
-                        permission_router: true,
-                      },
-                    },
-                  },
-                },
+                ...defaultSelect,
               },
             },
           },
@@ -141,11 +148,37 @@ export class UserService
     });
 
     if (!data) return [];
-
-    return data.Role.GroupRole.GroupPermission.reduce(
-      (acc, item) =>
-        acc.concat(item.Permission.map((per) => per.permission_router)),
+    const {
+      Role: { RolePermission, children },
+    } = data;
+    const permissionRouter = RolePermission.map(
+      (item) => item.Permission.permission_router
+    );
+    const permissionRouterChildren = children.reduce(
+      (acc, { RolePermission }) =>
+        acc.concat(
+          RolePermission.map((item) => item.Permission.permission_router)
+        ),
       []
     );
+    return [...permissionRouter, ...permissionRouterChildren];
+  }
+
+  async isAdmin(user_id: number) {
+    const routersPermission = await this.prismaService.user.findFirst({
+      where: {
+        user_id,
+        Role: {
+          RolePermission: {
+            some: {
+              Permission: {
+                permission_key: this.KEY_SYSTEM,
+              },
+            },
+          },
+        },
+      },
+    });
+    return routersPermission ? true : false;
   }
 }

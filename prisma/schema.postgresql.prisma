@@ -49,61 +49,55 @@ model Device {
   user_id    Int?
 }
 
-model Role {
-  role_id                 Int        @id @default(autoincrement())
-  role_name               String
-  role_description        String?
-  role_is_all_permissions Boolean    @default(false)
-  created_at              DateTime   @default(now())
-  updated_at              DateTime   @updatedAt
-  User                    User[]
-  GroupRole               GroupRole? @relation(fields: [group_role_id], references: [group_role_id])
-  group_role_id           Int?
-}
-
 model Webpage {
-  webpage_id          Int         @id @default(autoincrement())
+  webpage_id          Int     @id @default(autoincrement())
   webpage_url         String
   webpage_name        String
   webpage_key         String
   webpage_description String?
-  GroupRole           GroupRole[]
+  Role                Role[]
 }
 
-model GroupRole {
-  group_role_id          Int               @id @default(autoincrement())
-  group_role_name        String
-  group_role_description String?
-  group_role_parent_id   Int?
-  created_at             DateTime          @default(now())
-  updated_at             DateTime          @updatedAt
-  Role                   Role[]
-  GroupPermission        GroupPermission[]
+model Role {
+  role_id          Int      @id @default(autoincrement())
+  role_name        String
+  role_description String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  User             User[]
+
+  parent         Role?  @relation(name: "relationRole", fields: [role_parent_id], references: [role_id], onDelete: Restrict, onUpdate: Restrict)
+  role_parent_id Int?
+  children       Role[] @relation(name: "relationRole")
 
   Webpage    Webpage? @relation(fields: [webpage_id], references: [webpage_id])
   webpage_id Int?
+
+  Permission     Permission[]
+  RolePermission RolePermission[]
+}
+
+model RolePermission {
+  Role          Role       @relation(fields: [role_id], references: [role_id])
+  role_id       Int
+  Permission    Permission @relation(fields: [permission_id], references: [permission_id])
+  permission_id Int
+
+  @@id([role_id, permission_id])
 }
 
 model Permission {
-  permission_id          Int              @id @default(autoincrement())
+  permission_id          Int      @id @default(autoincrement())
   permission_name        String
   permission_description String?
   permission_key         String
   permission_router      String
-  created_at             DateTime         @default(now())
-  updated_at             DateTime         @updatedAt
-  GroupPermission        GroupPermission? @relation(fields: [group_permission_id], references: [group_permission_id])
-  group_permission_id    Int?
-}
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
 
-model GroupPermission {
-  group_permission_id          Int          @id @default(autoincrement())
-  group_permission_name        String
-  group_permission_description String?
-  group_permission_parent_id   Int?
-  created_at                   DateTime     @default(now())
-  updated_at                   DateTime     @updatedAt
-  Permission                   Permission[]
-  GroupRole                    GroupRole?   @relation(fields: [group_role_id], references: [group_role_id])
-  group_role_id                Int?
+  parent               Permission?      @relation(name: "relationPermission", fields: [permission_parent_id], references: [permission_id], onDelete: Restrict, onUpdate: Restrict)
+  permission_parent_id Int?
+  children             Permission[]     @relation(name: "relationPermission")
+  Role                 Role[]
+  RolePermission       RolePermission[]
 }

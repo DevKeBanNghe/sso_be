@@ -18,9 +18,8 @@ import { applyOtherMiddlewares } from 'src/common/middlewares';
 import { RoleModule } from './role/role.module';
 import { PermissionModule } from './permission/permission.module';
 import { PrismaModule } from 'src/common/db/prisma/prisma.module';
-import { GroupRoleModule } from './group-role/group-role.module';
-import { GroupPermissionModule } from './group-permission/group-permission.module';
 import { WebpageModule } from './webpage/webpage.module';
+import { RolePermissionModule } from './role-permission/role-permission.module';
 
 @Module({
   imports: [
@@ -47,9 +46,8 @@ import { WebpageModule } from './webpage/webpage.module';
     StringUtilModule,
     RoleModule,
     PermissionModule,
+    RolePermissionModule,
     WebpageModule,
-    GroupRoleModule,
-    GroupPermissionModule,
   ],
   controllers: [AppController],
   providers: [

@@ -3,7 +3,7 @@ export interface CreateService<T = unknown> {
 }
 
 export interface UpdateService<T = unknown> {
-  update(updateDto: T);
+  update(updateDto: T | T[]);
 }
 
 export interface DeleteService<T = number[]> {

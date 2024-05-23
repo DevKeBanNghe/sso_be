@@ -16,6 +16,7 @@ import {
   GetWebpageOptionsDto,
 } from './dto/get-webpage.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
+import { RoleService } from '../role/role.service';
 
 @Injectable()
 export class WebpageService
@@ -30,26 +31,36 @@ export class WebpageService
 {
   constructor(
     private prismaService: PrismaService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private roleService: RoleService
   ) {}
   getInstance() {
     return this.prismaService.webpage;
   }
-  create(createDto: CreateWebpageDto) {
-    return this.prismaService.webpage.create({
+  async create({ role_ids, ...createDto }: CreateWebpageDto) {
+    const webpageData = await this.prismaService.webpage.create({
       data: {
         ...createDto,
       },
     });
+
+    await this.roleService.updateWebpage({
+      webpage_id: webpageData.webpage_id,
+      role_ids,
+    });
+    return webpageData;
   }
 
-  update({ webpage_id, ...dataUpdate }: UpdateWebpageDto) {
-    return this.prismaService.webpage.update({
+  async update({ webpage_id, role_ids, ...dataUpdate }: UpdateWebpageDto) {
+    const webpageData = await this.prismaService.webpage.update({
       data: dataUpdate,
       where: {
         webpage_id,
       },
     });
+
+    await this.roleService.updateWebpage({ webpage_id, role_ids });
+    return webpageData;
   }
   remove(ids: number[]) {
     return this.prismaService.webpage.deleteMany({
@@ -61,7 +72,7 @@ export class WebpageService
     });
   }
   async getDetail(id: number) {
-    const Webpage = await this.prismaService.webpage.findUnique({
+    const webpageData = await this.prismaService.webpage.findUnique({
       where: { webpage_id: id },
       select: {
         webpage_id: true,
@@ -69,10 +80,17 @@ export class WebpageService
         webpage_description: true,
         webpage_key: true,
         webpage_name: true,
+        Role: {
+          select: {
+            role_id: true,
+            role_name: true,
+          },
+        },
       },
     });
-    if (!Webpage) throw new BadRequestException('Group Webpage not found');
-    return Webpage;
+    if (!webpageData) throw new BadRequestException('Webpage not found');
+    const { Role = [], ...webpage } = webpageData;
+    return { ...webpage, role_ids: Role.map((item) => item.role_id) };
   }
 
   getList(getWebpageListByPaginationDto: GetWebpageListByPaginationDto) {
@@ -99,10 +117,10 @@ export class WebpageService
         webpage_id: true,
         webpage_url: true,
         webpage_description: true,
-        GroupRole: {
+        Role: {
           select: {
-            group_role_id: true,
-            group_role_name: true,
+            role_id: true,
+            role_name: true,
           },
         },
       },

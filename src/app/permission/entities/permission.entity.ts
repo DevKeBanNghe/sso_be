@@ -11,6 +11,4 @@ export class Permission {
   permission_key: string;
   @IsString()
   permission_router: string;
-  @IsNumber()
-  group_permission_id: number;
 }

@@ -1,9 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreatePermissionDto } from './dto/create-permission.dto';
-import {
-  UpdateGroupPermissionDto,
-  UpdatePermissionDto,
-} from './dto/update-permission.dto';
+import { UpdatePermissionDto } from './dto/update-permission.dto';
 import {
   CreateService,
   DeleteService,
@@ -35,48 +32,17 @@ export class PermissionService
     private apiService: ApiService
   ) {}
 
-  private async removeGroupPermissionExist(group_permission_id: number) {
-    return this.prismaService.permission.updateMany({
-      data: {
-        group_permission_id: null,
-      },
-      where: {
-        group_permission_id,
-      },
-    });
-  }
-  async updateGroupPermission({
-    group_permission_id,
-    permission_ids,
-  }: UpdateGroupPermissionDto) {
-    await this.removeGroupPermissionExist(group_permission_id);
-    return this.prismaService.permission.updateMany({
-      data: {
-        group_permission_id,
-      },
-      where: {
-        permission_id: {
-          in: permission_ids,
-        },
-      },
-    });
-  }
-
   async getPermissionsByRole(getPermissionsByRoleDto: GetPermissionsByRoleDto) {
     return this.prismaService.permission.findMany({
       select: {
         permission_key: true,
       },
       where: {
-        GroupPermission: {
-          GroupRole: {
-            AND: {
-              Webpage: {
-                webpage_url: getPermissionsByRoleDto.webpage_url,
-              },
-              Role: {
-                every: { role_id: getPermissionsByRoleDto.role_id },
-              },
+        Role: {
+          every: {
+            role_id: getPermissionsByRoleDto.role_id,
+            Webpage: {
+              webpage_url: getPermissionsByRoleDto.webpage_url,
             },
           },
         },
@@ -92,7 +58,21 @@ export class PermissionService
       },
     });
   }
-  remove(ids: number[]) {
+
+  removePermissionChildren(permission_parent_ids: number[]) {
+    return this.prismaService.permission.updateMany({
+      data: {
+        permission_parent_id: null,
+      },
+      where: {
+        permission_parent_id: {
+          in: permission_parent_ids,
+        },
+      },
+    });
+  }
+  async remove(ids: number[]) {
+    await this.removePermissionChildren(ids);
     return this.prismaService.permission.deleteMany({
       where: {
         permission_id: {
@@ -108,9 +88,9 @@ export class PermissionService
         permission_id: true,
         permission_name: true,
         permission_description: true,
-        group_permission_id: true,
         permission_key: true,
         permission_router: true,
+        permission_parent_id: true,
       },
     });
     if (!permission) throw new BadRequestException('Permission not found');
@@ -128,7 +108,6 @@ export class PermissionService
         permission_name: true,
         permission_description: true,
         permission_key: true,
-        group_permission_id: true,
       },
     });
   }
@@ -138,17 +117,20 @@ export class PermissionService
     itemPerPage,
   }: GetPermissionListByPaginationDto) {
     const skip = (page - 1) * itemPerPage;
+    const fieldsSelectDefault = {
+      permission_id: true,
+      permission_name: true,
+      permission_description: true,
+      permission_key: true,
+      permission_router: true,
+    };
+
     const list = await this.prismaService.permission.findMany({
       select: {
-        permission_id: true,
-        permission_name: true,
-        permission_description: true,
-        permission_key: true,
-        permission_router: true,
-        GroupPermission: {
+        ...fieldsSelectDefault,
+        children: {
           select: {
-            group_permission_name: true,
-            group_permission_id: true,
+            ...fieldsSelectDefault,
           },
         },
       },
@@ -160,7 +142,17 @@ export class PermissionService
     });
 
     return this.apiService.formatPagination<typeof list>({
-      list,
+      list: list.map((item) => {
+        return {
+          ...item,
+          children: item.children.length
+            ? item.children.map((child) => ({
+                ...child,
+                key: `permission_child_${child.permission_id}`,
+              }))
+            : null,
+        };
+      }),
       totalItems: await this.prismaService.permission.count(),
       page,
       itemPerPage,
