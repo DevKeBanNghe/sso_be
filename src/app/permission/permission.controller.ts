@@ -20,6 +20,7 @@ import {
   GetPermissionOptionsDto,
 } from './dto/get-permission.dto';
 import { ParseIntArrayPipe } from 'src/common/pipes/parse-int-array.pipe';
+import { ParseParamsOptionPipe } from 'src/common/pipes/parse-params-option.pipe';
 
 @Controller('permissions')
 export class PermissionController {
@@ -46,6 +47,7 @@ export class PermissionController {
   }
 
   @Get('/options')
+  @UsePipes(ParseParamsOptionPipe)
   getOptions(@Query() getOptionsDto: GetPermissionOptionsDto) {
     return this.permissionService.getOptions(getOptionsDto);
   }

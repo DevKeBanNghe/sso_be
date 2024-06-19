@@ -11,10 +11,7 @@ import {
   UpdateService,
 } from 'src/common/interfaces/service.interface';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';
-import {
-  GetWebpageListByPaginationDto,
-  GetWebpageOptionsDto,
-} from './dto/get-webpage.dto';
+import { GetWebpageListByPaginationDto } from './dto/get-webpage.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { RoleService } from '../role/role.service';
 
@@ -23,7 +20,6 @@ export class WebpageService
   implements
     GetAllService,
     CreateService<CreateWebpageDto>,
-    GetOptionsService<GetWebpageOptionsDto>,
     GetDetailService,
     DeleteService,
     UpdateService<UpdateWebpageDto>,
@@ -136,22 +132,6 @@ export class WebpageService
       totalItems: await this.prismaService.webpage.count(),
       page,
       itemPerPage,
-    });
-  }
-
-  getOptions(getOptionsDto: GetWebpageOptionsDto) {
-    return this.prismaService.webpage.findMany({
-      select: {
-        webpage_id: true,
-        webpage_url: true,
-      },
-      where: {
-        webpage_url: {
-          contains: getOptionsDto.webpage_url,
-          mode: 'insensitive',
-        },
-      },
-      take: getOptionsDto.limit,
     });
   }
 

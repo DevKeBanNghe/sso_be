@@ -18,4 +18,6 @@ export class GetPermissionListByPaginationDto extends IntersectionType(
 export class GetPermissionOptionsDto extends IntersectionType(
   OptionParams,
   PartialType(Permission)
-) {}
+) {
+  role_ids: string;
+}

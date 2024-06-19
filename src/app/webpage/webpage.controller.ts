@@ -3,34 +3,24 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   UsePipes,
   Put,
   Query,
   ParseIntPipe,
-  BadRequestException,
 } from '@nestjs/common';
 import { WebpageService } from './webpage.service';
 import { CreateWebpageDto } from './dto/create-webpage.dto';
 import { UpdateWebpageDto } from './dto/update-webpage.dto';
 import { ClearDecodedDataPipe } from 'src/common/pipes/clear-decoded-data.pipe';
-import {
-  GetWebpageListByPaginationDto,
-  GetWebpageOptionsDto,
-} from './dto/get-webpage.dto';
+import { GetWebpageListByPaginationDto } from './dto/get-webpage.dto';
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
 import { ParseIntArrayPipe } from 'src/common/pipes/parse-int-array.pipe';
 
 @Controller('webpages')
 export class WebpageController {
   constructor(private readonly WebpageService: WebpageService) {}
-
-  @Get('/options')
-  getOptions(@Body() getOptionsDto: GetWebpageOptionsDto) {
-    return this.WebpageService.getOptions(getOptionsDto);
-  }
 
   @Post()
   @UsePipes(ClearDecodedDataPipe)

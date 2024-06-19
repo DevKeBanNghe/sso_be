@@ -10,7 +10,6 @@ import { AllExceptionFilter } from './common/filters/all-exception.filter';
 import { ApiService } from './common/utils/api/api.service';
 import { HttpAdapterHost } from '@nestjs/core';
 import { AccessControlGuard } from './common/guards/access-control.guard';
-import { ParseParamsOptionPipe } from './common/pipes/parse-params-option.pipe';
 import { UserService } from './app/user/user.service';
 import { WebpageService } from './app/webpage/webpage.service';
 
@@ -32,7 +31,7 @@ export const initApp = async (app: INestApplication) => {
     new AuthGuard(apiService),
     new AccessControlGuard(configService, app.get(UserService), apiService)
   );
-  app.useGlobalPipes(new ValidationPipe(), new ParseParamsOptionPipe());
+  app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(
     new FormatResponseInterceptor(apiService),
     new LoggingInterceptor(apiService, configService)

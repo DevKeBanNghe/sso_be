@@ -49,11 +49,16 @@ export class AllExceptionFilter implements ExceptionFilter {
         message: JSON.stringify(errors),
       });
 
+      const isRefreshToken =
+        request.path.includes('/refresh-token') &&
+        exceptionInstance.status === HttpStatus.UNAUTHORIZED;
+
       httpAdapter.reply(
         response,
         this.apiService.formatResponse({
           path: httpAdapter.getRequestUrl(request),
           errors,
+          data: isRefreshToken ? { isRefresh: true } : null,
         }),
         exceptionInstance.status
       );

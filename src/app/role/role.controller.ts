@@ -20,6 +20,7 @@ import {
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
 import { ParseIntArrayPipe } from 'src/common/pipes/parse-int-array.pipe';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { ParseParamsOptionPipe } from 'src/common/pipes/parse-params-option.pipe';
 
 @Controller('roles')
 export class RoleController {
@@ -44,7 +45,7 @@ export class RoleController {
   }
 
   @Get('/options')
-  @UsePipes(ClearDecodedDataPipe)
+  @UsePipes(ParseParamsOptionPipe)
   getRoleOptions(@Query() getOptionsDto?: GetRoleOptionsDto) {
     return this.roleService.getOptions(getOptionsDto);
   }

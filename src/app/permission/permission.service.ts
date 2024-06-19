@@ -166,19 +166,41 @@ export class PermissionService
     });
   }
 
-  getOptions(getOptionsDto: GetPermissionOptionsDto) {
-    return this.prismaService.permission.findMany({
+  async getOptions({
+    role_ids,
+    permission_name,
+    limit,
+  }: GetPermissionOptionsDto) {
+    let roleConditions = {};
+    if (role_ids) {
+      roleConditions = {
+        role_id: {
+          in: role_ids.split(',').map((item) => parseInt(item)),
+        },
+      };
+    }
+
+    const data = await this.prismaService.rolePermission.findMany({
       select: {
-        permission_id: true,
-        permission_name: true,
-      },
-      where: {
-        permission_name: {
-          contains: getOptionsDto.permission_name,
-          mode: 'insensitive',
+        Permission: {
+          select: {
+            permission_id: true,
+            permission_name: true,
+          },
         },
       },
-      take: getOptionsDto.limit,
+      where: {
+        Permission: {
+          permission_name: {
+            contains: permission_name,
+            mode: 'insensitive',
+          },
+        },
+        ...roleConditions,
+      },
+      take: limit,
+      distinct: ['permission_id'],
     });
+    return data.map((item) => item.Permission);
   }
 }

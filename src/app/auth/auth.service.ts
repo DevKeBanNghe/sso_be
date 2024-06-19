@@ -7,6 +7,7 @@ import { UserService } from '../user/user.service';
 import { StringUtilService } from 'src/common/utils/string/string-util.service';
 import { TokenExpireIn } from 'src/consts/jwt.const';
 import {
+  FacebookUserDto,
   GithubUserDto,
   GoogleUserDto,
   SignInDto,
@@ -26,6 +27,7 @@ import {
   COOKIE_REDIRECT_EXPIRE_IN,
   COOKIE_REDIRECT_KEY,
 } from 'src/consts/cookie.const';
+import { lowerCase } from 'lodash';
 
 @Injectable()
 export class AuthService {
@@ -156,12 +158,8 @@ export class AuthService {
       if (!is_correct_pwd) throw new UnauthorizedException();
     }
 
-    const {
-      user_password,
-      Role: { RolePermission, children },
-      user_id,
-      ...userData
-    } = user;
+    const { user_password, Role, user_id, ...userData } = user;
+    const { RolePermission = [], children = [] } = Role ?? {};
     const permissionKey = RolePermission.map(
       (item) => item.Permission.permission_key
     );
@@ -183,7 +181,10 @@ export class AuthService {
   }
 
   async signUpWithGoogleOAuth2(user: GoogleUserDto) {
-    if (!user) throw new UnauthorizedException('Not found user from google!');
+    if (!user)
+      throw new UnauthorizedException(
+        `Not found user from ${lowerCase(TypeLogin.GOOGLE)}!`
+      );
 
     const userFind = await this.userService.getInstance().findFirst({
       where: {
@@ -210,7 +211,10 @@ export class AuthService {
   }
 
   async signUpWithGithub(user: GithubUserDto) {
-    if (!user) throw new UnauthorizedException('Not found user from google!');
+    if (!user)
+      throw new UnauthorizedException(
+        `Not found user from ${lowerCase(TypeLogin.GITHUB)}!`
+      );
     const userFind = await this.userService.getInstance().findFirst({
       where: {
         user_email: user.email ?? user.user_name,
@@ -232,6 +236,34 @@ export class AuthService {
       password: null,
       user_image_url: user.avatar_url,
       user_type_login: TypeLogin.GITHUB,
+    });
+  }
+
+  async signUpWithFacebook(user: FacebookUserDto) {
+    if (!user)
+      throw new UnauthorizedException(
+        `Not found user from ${lowerCase(TypeLogin.FACEBOOK)}!`
+      );
+    const userFind = await this.userService.getInstance().findFirst({
+      where: {
+        user_email: user.email ?? user.user_name,
+        user_type_login: TypeLogin.FACEBOOK,
+      },
+    });
+
+    if (userFind)
+      return await this.signIn({
+        user_name: userFind.user_name,
+        user_type_login: TypeLogin.FACEBOOK,
+      });
+
+    return await this.signUp({
+      email: user.email,
+      user_first_name: user.first_name,
+      user_last_name: user.last_name,
+      user_name: user.user_name ?? `${user.first_name} ${user.last_name}`,
+      password: null,
+      user_type_login: TypeLogin.FACEBOOK,
     });
   }
 
@@ -295,7 +327,7 @@ export class AuthService {
         webpage_key,
       },
     });
-    return webpage;
+    return webpage ?? { webpage_url: this.configService.get(EnvVars.FE_URL) };
   }
 
   async refreshToken(token: string) {
@@ -316,6 +348,10 @@ export class AuthService {
   }
 
   githubHandle({ webpage_key, res }: SocialsSignDto) {
+    return this.saveWebpageKeyToCookie({ webpage_key, res });
+  }
+
+  facebookHandle({ webpage_key, res }: SocialsSignDto) {
     return this.saveWebpageKeyToCookie({ webpage_key, res });
   }
 }

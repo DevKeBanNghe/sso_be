@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
+  FacebookUserDto,
   GithubUserDto,
   GoogleUserDto,
   SignInDto,
@@ -30,6 +31,9 @@ import { RedirectToInterceptor } from './interceptors/redirect-to.interceptor';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
 import { GithubGuard } from './guards/github.guard';
 import { ApiService } from 'src/common/utils/api/api.service';
+import { FacebookGuard } from './guards/facebook.guard';
+import { TypeLogin } from '../user/entities/user.entity';
+import { toLower } from 'lodash';
 
 @Controller('auth')
 export class AuthController {
@@ -66,6 +70,20 @@ export class AuthController {
     return this.authService.googleOAuth2Handle({ res, webpage_key });
   }
 
+  private async handleSignUpSocials({
+    type = TypeLogin.GOOGLE,
+    data,
+    webpage_key,
+  }) {
+    if (!data)
+      throw new UnauthorizedException(`Sign up with ${toLower(type)} failed!`);
+
+    if (!webpage_key) return data;
+
+    const webpage = await this.authService.getWebpageRedirect(webpage_key);
+    return { ...data, ...webpage };
+  }
+
   @Get('google-redirect')
   @UseGuards(GoogleOAuth2Guard)
   @UseInterceptors(RedirectToInterceptor)
@@ -73,15 +91,10 @@ export class AuthController {
     const data = await this.authService.signUpWithGoogleOAuth2(
       req.user as GoogleUserDto
     );
-    if (!data) throw new UnauthorizedException('Sign up with google failed!');
-
-    const webpage_key = req.cookies[COOKIE_REDIRECT_KEY];
-    if (!webpage_key) return data;
-
-    const webpage = await this.authService.getWebpageRedirect(webpage_key);
-    if (!webpage) return data;
-
-    return { ...data, ...webpage };
+    return this.handleSignUpSocials({
+      data,
+      webpage_key: req.cookies[COOKIE_REDIRECT_KEY],
+    });
   }
 
   @Get('github')
@@ -100,15 +113,36 @@ export class AuthController {
     const data = await this.authService.signUpWithGithub(
       req.user as GithubUserDto
     );
-    if (!data) throw new UnauthorizedException('Sign up with github failed!');
 
-    const webpage_key = req.cookies[COOKIE_REDIRECT_KEY];
-    if (!webpage_key) return data;
+    return this.handleSignUpSocials({
+      type: TypeLogin.GITHUB,
+      data,
+      webpage_key: req.cookies[COOKIE_REDIRECT_KEY],
+    });
+  }
 
-    const webpage = await this.authService.getWebpageRedirect(webpage_key);
+  @Get('facebook')
+  @Redirect('facebook-redirect')
+  facebookHandle(
+    @Res() res: Response,
+    @Query('webpage_key') webpage_key: string
+  ) {
+    return this.authService.facebookHandle({ res, webpage_key });
+  }
 
-    if (!webpage) return data;
-    return { ...data, ...webpage };
+  @Get('facebook-redirect')
+  @UseGuards(FacebookGuard)
+  @UseInterceptors(RedirectToInterceptor)
+  async signUpWithFacebook(@Req() req: Request) {
+    const data = await this.authService.signUpWithFacebook(
+      req.user as FacebookUserDto
+    );
+
+    return this.handleSignUpSocials({
+      type: TypeLogin.FACEBOOK,
+      data,
+      webpage_key: req.cookies[COOKIE_REDIRECT_KEY],
+    });
   }
 
   @Post('forgot-password')

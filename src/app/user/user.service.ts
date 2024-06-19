@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';
 import {
   CreateService,
@@ -148,9 +144,8 @@ export class UserService
     });
 
     if (!data) return [];
-    const {
-      Role: { RolePermission, children },
-    } = data;
+    const { Role } = data;
+    const { RolePermission = [], children = [] } = Role ?? {};
     const permissionRouter = RolePermission.map(
       (item) => item.Permission.permission_router
     );
