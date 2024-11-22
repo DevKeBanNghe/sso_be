@@ -1,9 +1,22 @@
 {
   "ignorePatterns": ["!**/*"],
+  "plugins": ["unused-imports"],
   "overrides": [
     {
       "files": ["*.ts", "*.tsx"],
-      "rules": {}
+      "rules": {
+        "no-unused-vars": "off",
+        "unused-imports/no-unused-imports": "error",
+        "unused-imports/no-unused-vars": [
+          "warn",
+          {
+            "vars": "all",
+            "varsIgnorePattern": "^_",
+            "args": "after-used",
+            "argsIgnorePattern": "^_"
+          }
+        ]
+      }
     },
     {
       "files": ["*.js", "*.jsx"],

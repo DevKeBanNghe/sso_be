@@ -7,7 +7,6 @@ import { Request, Response, NextFunction } from 'express';
 import { KEY_FROM_DECODED_TOKEN } from 'src/consts/jwt.const';
 import { ApiService } from '../utils/api/api.service';
 import { AuthService } from 'src/app/auth/auth.service';
-import { TokenExpiredError } from '@nestjs/jwt';
 import { COOKIE_ACCESS_TOKEN_KEY } from 'src/consts/cookie.const';
 
 @Injectable()

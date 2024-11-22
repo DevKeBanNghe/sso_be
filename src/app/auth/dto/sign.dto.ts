@@ -27,3 +27,10 @@ export class FacebookUserDto extends FacebookUser {}
 export class SocialsSignDto extends PickType(Webpage, ['webpage_key']) {
   res: Response;
 }
+
+export class handleSignUpSocialsParams extends PickType(Webpage, [
+  'webpage_key',
+]) {
+  type?: User['user_type_login'];
+  data;
+}

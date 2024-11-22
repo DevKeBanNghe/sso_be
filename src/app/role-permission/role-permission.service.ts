@@ -5,7 +5,6 @@ import {
   UpdateService,
 } from 'src/common/interfaces/service.interface';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';
-import { groupBy, mapValues, omit } from 'lodash';
 
 @Injectable()
 export class RolePermissionService
@@ -28,7 +27,7 @@ export class RolePermissionService
     return {};
   }
 
-  async getAll(getAllDto?: unknown) {
+  async getAll() {
     const rolePermissionData =
       await this.prismaService.rolePermission.findMany();
 

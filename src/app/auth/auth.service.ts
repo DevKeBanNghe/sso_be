@@ -17,7 +17,7 @@ import {
 import { AuthToken } from './types/token.type';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts';
-import { TypeLogin } from '../user/entities/user.entity';
+import { TypeLogin } from '@prisma/postgresql_client';
 import { MailerService } from '@nestjs-modules/mailer';
 import { MailTemplate } from 'src/consts/mail.const';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
@@ -27,7 +27,6 @@ import {
   COOKIE_REDIRECT_EXPIRE_IN,
   COOKIE_REDIRECT_KEY,
 } from 'src/consts/cookie.const';
-import { lowerCase } from 'lodash';
 
 @Injectable()
 export class AuthService {
@@ -183,7 +182,7 @@ export class AuthService {
   async signUpWithGoogleOAuth2(user: GoogleUserDto) {
     if (!user)
       throw new UnauthorizedException(
-        `Not found user from ${lowerCase(TypeLogin.GOOGLE)}!`
+        `Not found user from ${TypeLogin.GOOGLE.toLowerCase()}!`
       );
 
     const userFind = await this.userService.getInstance().findFirst({
@@ -213,7 +212,7 @@ export class AuthService {
   async signUpWithGithub(user: GithubUserDto) {
     if (!user)
       throw new UnauthorizedException(
-        `Not found user from ${lowerCase(TypeLogin.GITHUB)}!`
+        `Not found user from ${TypeLogin.GITHUB.toLowerCase()}!`
       );
     const userFind = await this.userService.getInstance().findFirst({
       where: {
@@ -242,7 +241,7 @@ export class AuthService {
   async signUpWithFacebook(user: FacebookUserDto) {
     if (!user)
       throw new UnauthorizedException(
-        `Not found user from ${lowerCase(TypeLogin.FACEBOOK)}!`
+        `Not found user from ${TypeLogin.FACEBOOK.toLowerCase()}!`
       );
     const userFind = await this.userService.getInstance().findFirst({
       where: {

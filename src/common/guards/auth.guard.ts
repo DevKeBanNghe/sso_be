@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { ApiService } from '../utils/api/api.service';
 
 @Injectable()
@@ -10,9 +10,8 @@ export class AuthGuard implements CanActivate {
   canActivate(
     context: ExecutionContext
   ): boolean | Promise<boolean> | Observable<boolean> {
-    const { getRequest, getResponse } = context.switchToHttp();
+    const { getRequest } = context.switchToHttp();
     const req = getRequest<Request>();
-    const res = getResponse<Response>();
 
     if (this.apiService.isPathNotAuth(req.originalUrl)) return true;
 

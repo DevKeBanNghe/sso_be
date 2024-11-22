@@ -6,7 +6,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { ApiService } from '../utils/api/api.service';
 import { EnvVars, HttpHeaders } from 'src/consts';
 import { ConfigService } from '@nestjs/config';
@@ -18,9 +18,8 @@ export class LoggingInterceptor implements NestInterceptor {
     private configService: ConfigService
   ) {}
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const { getRequest, getResponse } = context.switchToHttp();
+    const { getRequest } = context.switchToHttp();
     const req = getRequest<Request>();
-    const res = getResponse<Response>();
     const now = Date.now();
     const requestId = req.headers[HttpHeaders.REQUEST_ID];
     const path = req.path.replace(

@@ -1,14 +1,7 @@
-import { DefaultValuePipe } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import { IsArray, IsEmail, IsEnum, IsNumber, IsString } from 'class-validator';
 import { Device } from 'src/app/device/entities/device.entity';
-
-export enum TypeLogin {
-  ACCOUNT = 'ACCOUNT',
-  FACEBOOK = 'FACEBOOK',
-  GOOGLE = 'GOOGLE',
-  GITHUB = 'GITHUB',
-}
+import { TypeLogin } from '@prisma/postgresql_client';
 
 export class User {
   @IsNumber()

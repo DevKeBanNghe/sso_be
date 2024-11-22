@@ -16,6 +16,7 @@ import {
   FacebookUserDto,
   GithubUserDto,
   GoogleUserDto,
+  handleSignUpSocialsParams,
   SignInDto,
   SignUpDto,
 } from './dto/sign.dto';
@@ -32,8 +33,7 @@ import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
 import { GithubGuard } from './guards/github.guard';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { FacebookGuard } from './guards/facebook.guard';
-import { TypeLogin } from '../user/entities/user.entity';
-import { toLower } from 'lodash';
+import { TypeLogin } from '@prisma/postgresql_client';
 
 @Controller('auth')
 export class AuthController {
@@ -74,9 +74,11 @@ export class AuthController {
     type = TypeLogin.GOOGLE,
     data,
     webpage_key,
-  }) {
+  }: handleSignUpSocialsParams) {
     if (!data)
-      throw new UnauthorizedException(`Sign up with ${toLower(type)} failed!`);
+      throw new UnauthorizedException(
+        `Sign up with ${type.toLowerCase()} failed!`
+      );
 
     if (!webpage_key) return data;
 

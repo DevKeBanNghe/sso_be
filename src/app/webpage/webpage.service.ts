@@ -7,7 +7,6 @@ import {
   GetAllService,
   GetDetailService,
   GetInstanceService,
-  GetOptionsService,
   UpdateService,
 } from 'src/common/interfaces/service.interface';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';

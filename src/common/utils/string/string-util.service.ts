@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import ms from 'ms';
-import _ from 'lodash';
 
 @Injectable()
 export class StringUtilService {
@@ -38,7 +37,8 @@ export class StringUtilService {
       data = {
         ...data,
         createdAt: Date.now(),
-        expiresIn: _.isString(expiresIn) ? this.toMS(expiresIn) : expiresIn,
+        expiresIn:
+          typeof expiresIn === 'string' ? this.toMS(expiresIn) : expiresIn,
       };
     const cipher = crypto.createCipheriv(this.algorithm, this.key, this.iv);
     const encrypted = cipher

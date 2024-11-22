@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/postgresql_client';
 import { PrismaClient } from '@prisma/postgresql_client';
-
 @Injectable()
 export class PrismaService
   extends PrismaClient
