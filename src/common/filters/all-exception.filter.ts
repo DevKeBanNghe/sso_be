@@ -29,16 +29,18 @@ export class AllExceptionFilter implements ExceptionFilter {
 
       const { httpAdapter } = this.httpAdapterHost;
 
-      const exceptionInstance =
-        exception instanceof HttpException
-          ? {
-              status: exception?.getStatus(),
-              exception: exception.getResponse(),
-            }
-          : {
-              status: HttpStatus.INTERNAL_SERVER_ERROR,
-              exception: exception.message,
-            };
+      let exceptionInstance = {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        exception: exception.message,
+      };
+
+      if (exception instanceof HttpException) {
+        exceptionInstance = {
+          ...exceptionInstance,
+          status: exception?.getStatus(),
+          exception: exception.getResponse(),
+        };
+      }
 
       const errors = this.getMessagesError(exceptionInstance.exception);
       Logger.error({
@@ -49,16 +51,11 @@ export class AllExceptionFilter implements ExceptionFilter {
         message: JSON.stringify(errors),
       });
 
-      const isRefreshToken =
-        request.path.includes('/refresh-token') &&
-        exceptionInstance.status === HttpStatus.UNAUTHORIZED;
-
       httpAdapter.reply(
         response,
         this.apiService.formatResponse({
           path: httpAdapter.getRequestUrl(request),
           errors,
-          data: isRefreshToken ? { isRefresh: true } : null,
         }),
         exceptionInstance.status
       );

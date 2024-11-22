@@ -7,7 +7,6 @@ import {
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../utils/api/api.service';
 import { Request, Response } from 'express';
-import { isPromise } from 'util/types';
 
 @Injectable()
 export class FormatResponseInterceptor implements NestInterceptor {

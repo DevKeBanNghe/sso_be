@@ -25,6 +25,7 @@
   },
   "private": true,
   "dependencies": {
+    "@nestjs-microservice/source": "file:",
     "@nestjs-modules/mailer": "^1.11.2",
     "@nestjs/common": "^10.0.2",
     "@nestjs/config": "^3.2.0",
