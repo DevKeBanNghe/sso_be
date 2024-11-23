@@ -50,4 +50,6 @@ logs/
 
 data
 
-.env   
+.env  
+
+prisma/migrations
