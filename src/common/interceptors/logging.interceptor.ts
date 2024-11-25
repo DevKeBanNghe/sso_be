@@ -8,7 +8,8 @@ import {
 import { map, Observable } from 'rxjs';
 import { Request } from 'express';
 import { ApiService } from '../utils/api/api.service';
-import { EnvVars, HttpHeaders } from 'src/consts';
+import { EnvVars } from 'src/consts/env.const';
+import { HttpHeaders } from 'src/consts/enum.const';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()

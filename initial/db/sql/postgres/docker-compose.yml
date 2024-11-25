@@ -11,7 +11,6 @@ services:
       - POSTGRES_MASTER=true
     ports:
       - ${PG_MASTER_PORT}:5432
-
   # pg2:
   #   container_name: pg2
   #   build:

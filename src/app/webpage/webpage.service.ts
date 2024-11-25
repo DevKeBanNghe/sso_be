@@ -13,6 +13,7 @@ import { PrismaService } from 'src/common/db/prisma/prisma.service';
 import { GetWebpageListByPaginationDto } from './dto/get-webpage.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { RoleService } from '../role/role.service';
+import { Webpage } from './entities/webpage.entity';
 
 @Injectable()
 export class WebpageService
@@ -57,7 +58,7 @@ export class WebpageService
     await this.roleService.updateWebpage({ webpage_id, role_ids });
     return webpageData;
   }
-  remove(ids: number[]) {
+  remove(ids: Webpage['webpage_id'][]) {
     return this.prismaService.webpage.deleteMany({
       where: {
         webpage_id: {
@@ -66,7 +67,7 @@ export class WebpageService
       },
     });
   }
-  async getDetail(id: number) {
+  async getDetail(id: Webpage['webpage_id']) {
     const webpageData = await this.prismaService.webpage.findUnique({
       where: { webpage_id: id },
       select: {

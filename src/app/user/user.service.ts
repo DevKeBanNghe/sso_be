@@ -12,6 +12,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { GetUserListByPaginationDto } from './dto/get-user.dto';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UserService
@@ -30,7 +31,7 @@ export class UserService
 
   private readonly KEY_SYSTEM: string = 'SYS_ALL';
 
-  remove(ids: number[]) {
+  remove(ids: User['user_id'][]) {
     return this.prismaService.user.deleteMany({
       where: {
         user_id: {
@@ -39,7 +40,7 @@ export class UserService
       },
     });
   }
-  async getDetail(id: number) {
+  async getDetail(id: User['user_id']) {
     const user = await this.prismaService.user.findUnique({
       where: { user_id: id },
       select: {
@@ -113,7 +114,7 @@ export class UserService
     });
   }
 
-  async getRoutersPermission(user_id: number) {
+  async getRoutersPermission(user_id: User['user_id']) {
     const defaultSelect = {
       RolePermission: {
         select: {
@@ -159,7 +160,7 @@ export class UserService
     return [...permissionRouter, ...permissionRouterChildren];
   }
 
-  async isAdmin(user_id: number) {
+  async isAdmin(user_id: User['user_id']) {
     const routersPermission = await this.prismaService.user.findFirst({
       where: {
         user_id,

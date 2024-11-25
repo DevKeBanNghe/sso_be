@@ -1,5 +1,5 @@
 import { Controller, Get, Redirect } from '@nestjs/common';
-import { EnvVars } from 'src/consts';
+import { EnvVars } from 'src/consts/env.const';
 
 @Controller()
 export class AppController {

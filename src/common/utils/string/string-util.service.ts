@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import ms from 'ms';
-
 @Injectable()
 export class StringUtilService {
   private readonly algorithm = 'aes-256-cbc';
   private readonly key = crypto.randomBytes(32);
   private readonly iv = crypto.randomBytes(16);
+
   toArray(str: string, split_with: string | RegExp = ',') {
     return str.split(split_with);
   }
@@ -28,17 +28,13 @@ export class StringUtilService {
     return await bcrypt.compare(str, hash);
   }
 
-  toMS(str: string) {
-    return ms(str);
-  }
-
   encrypt<T>(data: T, expiresIn?: string | number): string {
     if (expiresIn)
       data = {
         ...data,
         createdAt: Date.now(),
         expiresIn:
-          typeof expiresIn === 'string' ? this.toMS(expiresIn) : expiresIn,
+          typeof expiresIn === 'string' ? ms(expiresIn) : expiresIn,
       };
     const cipher = crypto.createCipheriv(this.algorithm, this.key, this.iv);
     const encrypted = cipher

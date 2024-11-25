@@ -16,7 +16,7 @@ import {
 } from './dto/sign.dto';
 import { AuthToken } from './types/token.type';
 import { ConfigService } from '@nestjs/config';
-import { EnvVars } from 'src/consts';
+import { EnvVars } from 'src/consts/env.const';
 import { TypeLogin } from '@prisma/postgresql_client';
 import { MailerService } from '@nestjs-modules/mailer';
 import { MailTemplate } from 'src/consts/mail.const';
@@ -27,6 +27,7 @@ import {
   COOKIE_REDIRECT_EXPIRE_IN,
   COOKIE_REDIRECT_KEY,
 } from 'src/consts/cookie.const';
+import ms from 'ms';
 
 @Injectable()
 export class AuthService {
@@ -339,7 +340,7 @@ export class AuthService {
   private saveWebpageKeyToCookie({ webpage_key, res }: SocialsSignDto) {
     res.cookie(COOKIE_REDIRECT_KEY, webpage_key, {
       httpOnly: true,
-      maxAge: this.stringUtilService.toMS(COOKIE_REDIRECT_EXPIRE_IN),
+      maxAge: ms(COOKIE_REDIRECT_EXPIRE_IN),
     });
   }
   googleOAuth2Handle({ webpage_key, res }: SocialsSignDto) {

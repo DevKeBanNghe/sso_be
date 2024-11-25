@@ -2,7 +2,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, Profile } from 'passport-facebook';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EnvVars, FacebookEnvs } from 'src/consts';
+import { EnvVars, FacebookEnvs } from 'src/consts/env.const';
 
 @Injectable()
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {

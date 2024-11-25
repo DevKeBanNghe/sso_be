@@ -5,7 +5,7 @@ import { TypeLogin } from '@prisma/postgresql_client';
 
 export class User {
   @IsNumber()
-  readonly user_id: number;
+  readonly user_id: string;
   @IsString()
   user_first_name: string;
   @IsString()
@@ -25,7 +25,7 @@ export class User {
   user_image_url: string;
 
   @IsNumber()
-  role_id: number;
+  role_id: string;
 
   @IsArray()
   @Type(() => Device)

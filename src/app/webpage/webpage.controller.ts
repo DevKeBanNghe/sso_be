@@ -3,12 +3,11 @@ import {
   Get,
   Post,
   Body,
-  Param,
   Delete,
   UsePipes,
   Put,
   Query,
-  ParseIntPipe,
+  Param,
 } from '@nestjs/common';
 import { WebpageService } from './webpage.service';
 import { CreateWebpageDto } from './dto/create-webpage.dto';
@@ -16,7 +15,7 @@ import { UpdateWebpageDto } from './dto/update-webpage.dto';
 import { ClearDecodedDataPipe } from 'src/common/pipes/clear-decoded-data.pipe';
 import { GetWebpageListByPaginationDto } from './dto/get-webpage.dto';
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
-import { ParseIntArrayPipe } from 'src/common/pipes/parse-int-array.pipe';
+import { Webpage } from './entities/webpage.entity';
 
 @Controller('webpages')
 export class WebpageController {
@@ -44,13 +43,13 @@ export class WebpageController {
 
   @Get(':id')
   @UsePipes(ClearDecodedDataPipe)
-  getWebpageDetail(@Param('id', ParseIntPipe) id: number) {
+  getWebpageDetail(@Param('id') id: Webpage['webpage_id']) {
     return this.WebpageService.getDetail(id);
   }
 
   @Delete()
   @UsePipes(ClearDecodedDataPipe)
-  deleteWebpages(@Query('ids', ParseIntArrayPipe) ids: number[]) {
+  deleteWebpages(@Query('ids') ids: Webpage['webpage_id'][]) {
     return this.WebpageService.remove(ids);
   }
 }

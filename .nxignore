@@ -1,7 +1,8 @@
 *.drawio
 .husky
-husky-prepare
+initial
 data
 Dockerfile
 logs
 *.prisma
+*.spec.ts

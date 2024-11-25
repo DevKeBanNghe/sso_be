@@ -2,7 +2,7 @@ import { IsNumber, IsString } from 'class-validator';
 
 export class Permission {
   @IsNumber()
-  permission_id: number;
+  permission_id: string;
   @IsString()
   permission_name: string;
   @IsString()
@@ -11,4 +11,6 @@ export class Permission {
   permission_key: string;
   @IsString()
   permission_router: string;
+  @IsString()
+  permission_parent_id: string;
 }

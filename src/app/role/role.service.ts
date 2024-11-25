@@ -15,6 +15,8 @@ import {
 } from './dto/get-role.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { UpdateRoleDto, UpdateWebpageDto } from './dto/update-role.dto';
+import { Webpage } from '../webpage/entities/webpage.entity';
+import { Role } from './entities/role.entity';
 
 @Injectable()
 export class RoleService
@@ -54,7 +56,7 @@ export class RoleService
     });
   }
 
-  removeRoleChildren(role_parent_ids: number[]) {
+  removeRoleChildren(role_parent_ids: Role['role_parent_id'][]) {
     return this.prismaService.role.updateMany({
       data: {
         role_parent_id: null,
@@ -66,7 +68,7 @@ export class RoleService
       },
     });
   }
-  async remove(ids: number[]) {
+  async remove(ids: Role['role_id'][]) {
     await this.removeRoleChildren(ids);
     return await this.prismaService.role.deleteMany({
       where: {
@@ -76,7 +78,7 @@ export class RoleService
       },
     });
   }
-  async getDetail(id: number) {
+  async getDetail(id: Role['role_id']) {
     const role = await this.prismaService.role.findUnique({
       where: { role_id: id },
       select: {
@@ -150,7 +152,7 @@ export class RoleService
     });
   }
 
-  private async removeWebpageExist(webpage_id: number) {
+  private async removeWebpageExist(webpage_id: Webpage['webpage_id']) {
     return this.prismaService.role.updateMany({
       data: {
         webpage_id: null,

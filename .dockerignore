@@ -1,8 +1,37 @@
 .husky
 .vscode
-husky-prepare
+initial
 Dockerfile
 data
 dist
 logs
 *.drawio
+node_modules
+prisma/migrations
+*.sql
+.nx
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+docs/
+*.md
+LICENSE
+
+# Development config files
+.eslintrc*
+.prettierrc*
+.stylelintrc*
+.editorconfig
+*.log
+
+# Testing
+jest.config.ts
+**/jest.config.js
+**/*.spec.ts
+**/*.spec.tsx
+**/*.test.ts
+**/*.test.tsx

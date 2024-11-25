@@ -3,12 +3,11 @@ import {
   Get,
   Post,
   Body,
-  Param,
   Delete,
   UsePipes,
   Put,
   Query,
-  ParseIntPipe,
+  Param,
 } from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { CreatePermissionDto } from './dto/create-permission.dto';
@@ -19,8 +18,8 @@ import {
   GetPermissionListByPaginationDto,
   GetPermissionOptionsDto,
 } from './dto/get-permission.dto';
-import { ParseIntArrayPipe } from 'src/common/pipes/parse-int-array.pipe';
 import { ParseParamsOptionPipe } from 'src/common/pipes/parse-params-option.pipe';
+import { Permission } from './entities/permission.entity';
 
 @Controller('permissions')
 export class PermissionController {
@@ -54,13 +53,13 @@ export class PermissionController {
 
   @Get(':id')
   @UsePipes(ClearDecodedDataPipe)
-  getPermissionDetail(@Param('id', ParseIntPipe) id: number) {
+  getPermissionDetail(@Param('id') id: Permission['permission_id']) {
     return this.permissionService.getDetail(id);
   }
 
   @Delete()
   @UsePipes(ClearDecodedDataPipe)
-  deletePermissions(@Query('ids', ParseIntArrayPipe) ids: number[]) {
+  deletePermissions(@Query('ids') ids: Permission['permission_id'][]) {
     return this.permissionService.remove(ids);
   }
 }

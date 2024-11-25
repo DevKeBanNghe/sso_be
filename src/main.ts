@@ -4,7 +4,7 @@ import { AppModule } from './app/app.module';
 import { ConfigService } from '@nestjs/config';
 import { initApp } from './init';
 import { LoggerCustom } from './confs/logger.confs';
-import { EnvVars } from './consts';
+import { EnvVars } from './consts/env.const';
 
 async function bootstrap() {
   let app = await NestFactory.create(AppModule, {

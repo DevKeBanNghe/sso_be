@@ -3,13 +3,12 @@ import {
   Get,
   Body,
   Delete,
-  Param,
   UsePipes,
-  ParseIntPipe,
   Query,
   UnauthorizedException,
   Post,
   Put,
+  Param,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { KEY_FROM_DECODED_TOKEN } from 'src/consts/jwt.const';
@@ -18,7 +17,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
 import { GetUserListByPaginationDto } from './dto/get-user.dto';
-import { ParseIntArrayPipe } from 'src/common/pipes/parse-int-array.pipe';
+import { User } from './entities/user.entity';
 
 @Controller('users')
 export class UserController {
@@ -51,13 +50,13 @@ export class UserController {
 
   @Get(':id')
   @UsePipes(ClearDecodedDataPipe)
-  getUserDetail(@Param('id', ParseIntPipe) id: number) {
+  getUserDetail(@Param('id') id: User['user_id']) {
     return this.userService.getDetail(id);
   }
 
   @Delete()
   @UsePipes(ClearDecodedDataPipe)
-  deleteUsers(@Query('ids', ParseIntArrayPipe) ids: number[]) {
+  deleteUsers(@Query('ids') ids: User['user_id'][]) {
     return this.userService.remove(ids);
   }
 }

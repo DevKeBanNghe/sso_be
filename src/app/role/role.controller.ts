@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -18,9 +17,9 @@ import {
   GetRoleOptionsDto,
 } from './dto/get-role.dto';
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
-import { ParseIntArrayPipe } from 'src/common/pipes/parse-int-array.pipe';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { ParseParamsOptionPipe } from 'src/common/pipes/parse-params-option.pipe';
+import { Role } from './entities/role.entity';
 
 @Controller('roles')
 export class RoleController {
@@ -52,13 +51,13 @@ export class RoleController {
 
   @Get(':id')
   @UsePipes(ClearDecodedDataPipe)
-  getRoleDetail(@Param('id', ParseIntPipe) id: number) {
+  getRoleDetail(@Param('id') id: Role['role_id']) {
     return this.roleService.getDetail(id);
   }
 
   @Delete()
   @UsePipes(ClearDecodedDataPipe)
-  deleteRoles(@Query('ids', ParseIntArrayPipe) ids: number[]) {
+  deleteRoles(@Query('ids') ids: Role['role_id'][]) {
     return this.roleService.remove(ids);
   }
 }

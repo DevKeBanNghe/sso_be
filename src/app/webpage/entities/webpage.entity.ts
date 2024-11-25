@@ -2,7 +2,7 @@ import { IsNumber, IsString } from 'class-validator';
 
 export class Webpage {
   @IsNumber()
-  webpage_id: number;
+  webpage_id: string;
   @IsString()
   webpage_name: string;
   @IsString()

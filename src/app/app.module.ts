@@ -6,7 +6,7 @@ import { validationSchema } from 'src/confs/env.confs';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { UserModule } from './user/user.module';
-import { WinstonEnvs } from 'src/consts';
+import { MailEnvs, WinstonEnvs } from 'src/consts/env.const';
 import { AuthModule } from './auth/auth.module';
 import { DeviceModule } from './device/device.module';
 import { ApiModule } from 'src/common/utils/api/api.module';
@@ -20,7 +20,9 @@ import { PermissionModule } from './permission/permission.module';
 import { PrismaModule } from 'src/common/db/prisma/prisma.module';
 import { WebpageModule } from './webpage/webpage.module';
 import { RolePermissionModule } from './role-permission/role-permission.module';
-
+import { MailerModule } from '@nestjs-modules/mailer';
+import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
+import { MailTemplate } from 'src/consts/mail.const';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -37,6 +39,32 @@ import { RolePermissionModule } from './role-permission/role-permission.module';
           limit: config.get(WinstonEnvs.THROTTLE_LIMIT),
         },
       ],
+    }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: configService.get(MailEnvs.MAIL_HOST),
+          port: configService.get(MailEnvs.MAIL_PORT),
+          ignoreTLS: false,
+          secure: false,
+          auth: {
+            user: configService.get(MailEnvs.MAIL_INCOMING_USER),
+            pass: configService.get(MailEnvs.MAIL_INCOMING_PASS),
+          },
+        },
+        defaults: {
+          from: `"${MailTemplate.MAIL_NAME_DEFAULT}" <${MailTemplate.MAIL_DEFAULT}>`,
+        },
+        template: {
+          dir: __dirname + MailTemplate.TEMPLATES_PATH,
+          adapter: new PugAdapter(),
+          options: {
+            strict: true,
+          },
+        },
+      }),
     }),
     PrismaModule,
     UserModule,

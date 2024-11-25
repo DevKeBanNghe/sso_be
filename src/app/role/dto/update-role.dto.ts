@@ -11,5 +11,5 @@ export class UpdateRoleDto extends IntersectionType(
 export class UpdateWebpageDto extends IntersectionType(
   PickType(Webpage, ['webpage_id'])
 ) {
-  role_ids: number[];
+  role_ids: Role['role_id'][];
 }

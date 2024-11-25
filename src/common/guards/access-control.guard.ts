@@ -2,9 +2,10 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { UserService } from 'src/app/user/user.service';
-import { EnvVars } from 'src/consts';
+import { EnvVars } from 'src/consts/env.const';
 import { KEY_FROM_DECODED_TOKEN } from 'src/consts/jwt.const';
 import { ApiService } from '../utils/api/api.service';
+import { User } from 'src/app/user/entities/user.entity';
 
 @Injectable()
 export class AccessControlGuard {
@@ -27,7 +28,7 @@ export class AccessControlGuard {
     );
   }
 
-  private async isValidRouteAccess(user_id: number) {
+  private async isValidRouteAccess(user_id: User['user_id']) {
     const isAdmin = await this.userService.isAdmin(user_id);
     if (isAdmin) return true;
 

@@ -3,7 +3,8 @@ import { Request, Response, NextFunction } from 'express';
 import { IncomingHttpHeaders } from 'http2';
 import { StringUtilService } from '../utils/string/string-util.service';
 import { ConfigService } from '@nestjs/config';
-import { EnvVars, HttpHeaders } from 'src/consts';
+import { EnvVars } from 'src/consts/env.const';
+import { HttpHeaders } from 'src/consts/enum.const';
 @Injectable()
 export class DefaultParamsMiddleware implements NestMiddleware {
   constructor(

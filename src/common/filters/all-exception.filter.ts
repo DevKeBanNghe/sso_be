@@ -7,7 +7,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { HttpHeaders } from 'src/consts';
+import { HttpHeaders } from 'src/consts/enum.const';
 import { ApiService } from '../utils/api/api.service';
 import { HttpAdapterHost } from '@nestjs/core';
 

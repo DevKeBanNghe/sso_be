@@ -4,13 +4,8 @@ import { createLogger } from 'winston';
 import { WinstonModule } from 'nest-winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { ConfigService } from '@nestjs/config';
-import {
-  ConsoleType,
-  Environments,
-  EnvVars,
-  LogLevel,
-  WinstonEnvs,
-} from 'src/consts';
+import { EnvVars, WinstonEnvs } from 'src/consts/env.const';
+import { ConsoleType, Environments, LogLevel } from 'src/consts/enum.const';
 const configService = new ConfigService();
 const app_name = configService.get(EnvVars.APP_NAME);
 const env = configService.get(EnvVars.NODE_ENV);

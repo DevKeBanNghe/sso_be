@@ -6,11 +6,11 @@ export interface UpdateService<T = unknown> {
   update(updateDto: T | T[]);
 }
 
-export interface DeleteService<T = number[]> {
+export interface DeleteService<T = string[]> {
   remove(ids: T);
 }
 
-export interface GetDetailService<T = number> {
+export interface GetDetailService<T = string> {
   getDetail(id: T);
 }
 

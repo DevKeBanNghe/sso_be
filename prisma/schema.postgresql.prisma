@@ -10,8 +10,8 @@ generator client {
 }
 
 datasource db {
-  provider     = "postgresql"
-  url          = env("POSTGRES_URL")
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
 }
 
 enum TypeLogin {
@@ -22,7 +22,7 @@ enum TypeLogin {
 }
 
 model User {
-  user_id            Int       @id @default(autoincrement())
+  user_id            String    @id @default(cuid())
   user_first_name    String?
   user_last_name     String?
   user_name          String
@@ -34,22 +34,22 @@ model User {
   user_type_login    TypeLogin @default(ACCOUNT)
   Device             Device[]
   Role               Role?     @relation(fields: [role_id], references: [role_id])
-  role_id            Int?
+  role_id            String?
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
 }
 
 model Device {
-  device_id  Int      @id @default(autoincrement())
+  device_id  String   @id @default(cuid())
   device_ip  String?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   User       User?    @relation(fields: [user_id], references: [user_id])
-  user_id    Int?
+  user_id    String?
 }
 
 model Webpage {
-  webpage_id          Int     @id @default(autoincrement())
+  webpage_id          String  @id @default(cuid())
   webpage_url         String
   webpage_name        String
   webpage_key         String
@@ -58,19 +58,19 @@ model Webpage {
 }
 
 model Role {
-  role_id          Int      @id @default(autoincrement())
+  role_id          String   @id @default(cuid())
   role_name        String
   role_description String?
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
   User             User[]
 
-  parent         Role?  @relation(name: "relationRole", fields: [role_parent_id], references: [role_id], onDelete: Restrict, onUpdate: Restrict)
-  role_parent_id Int?
-  children       Role[] @relation(name: "relationRole")
+  parent         Role?   @relation(name: "relationRole", fields: [role_parent_id], references: [role_id], onDelete: Restrict, onUpdate: Restrict)
+  role_parent_id String?
+  children       Role[]  @relation(name: "relationRole")
 
   Webpage    Webpage? @relation(fields: [webpage_id], references: [webpage_id])
-  webpage_id Int?
+  webpage_id String?
 
   Permission     Permission[]
   RolePermission RolePermission[]
@@ -78,15 +78,15 @@ model Role {
 
 model RolePermission {
   Role          Role       @relation(fields: [role_id], references: [role_id])
-  role_id       Int
+  role_id       String
   Permission    Permission @relation(fields: [permission_id], references: [permission_id])
-  permission_id Int
+  permission_id String
 
   @@id([role_id, permission_id])
 }
 
 model Permission {
-  permission_id          Int      @id @default(autoincrement())
+  permission_id          String   @id @default(cuid())
   permission_name        String
   permission_description String?
   permission_key         String
@@ -95,7 +95,7 @@ model Permission {
   updated_at             DateTime @updatedAt
 
   parent               Permission?      @relation(name: "relationPermission", fields: [permission_parent_id], references: [permission_id], onDelete: Restrict, onUpdate: Restrict)
-  permission_parent_id Int?
+  permission_parent_id String?
   children             Permission[]     @relation(name: "relationPermission")
   Role                 Role[]
   RolePermission       RolePermission[]

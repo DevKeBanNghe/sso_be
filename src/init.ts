@@ -1,7 +1,8 @@
 import { INestApplication, VersioningType } from '@nestjs/common';
 import { ValidationPipe } from './common/pipes/validation.pipe';
 import { AuthGuard } from './common/guards/auth.guard';
-import { EnvVars, HttpHeaders } from './consts';
+import { EnvVars } from './consts/env.const';
+import { HttpHeaders } from './consts/enum.const';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ConfigService } from '@nestjs/config';
 import { initSwagger } from './confs/swagger.confs';

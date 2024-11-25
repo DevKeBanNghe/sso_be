@@ -16,6 +16,7 @@ import {
   GetPermissionsByRoleDto,
 } from './dto/get-permission.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
+import { Permission } from './entities/permission.entity';
 
 @Injectable()
 export class PermissionService
@@ -59,7 +60,9 @@ export class PermissionService
     });
   }
 
-  removePermissionChildren(permission_parent_ids: number[]) {
+  removePermissionChildren(
+    permission_parent_ids: Permission['permission_parent_id'][]
+  ) {
     return this.prismaService.permission.updateMany({
       data: {
         permission_parent_id: null,
@@ -71,7 +74,7 @@ export class PermissionService
       },
     });
   }
-  async remove(ids: number[]) {
+  async remove(ids: Permission['permission_id'][]) {
     await this.removePermissionChildren(ids);
     return this.prismaService.permission.deleteMany({
       where: {
@@ -81,7 +84,7 @@ export class PermissionService
       },
     });
   }
-  async getDetail(id: number) {
+  async getDetail(id: Permission['permission_id']) {
     const permission = await this.prismaService.permission.findUnique({
       where: { permission_id: id },
       select: {

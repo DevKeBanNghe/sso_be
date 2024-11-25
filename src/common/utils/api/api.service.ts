@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiResponse, FormatPagination } from './api.entity';
 import { ConfigService } from '@nestjs/config';
-import { EnvVars } from 'src/consts';
+import { EnvVars } from 'src/consts/env.const';
 import {
   PATHS_NOT_AUTH,
   PATHS_NOT_CHECK_PERMISSION,
