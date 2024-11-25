@@ -33,8 +33,7 @@ export class StringUtilService {
       data = {
         ...data,
         createdAt: Date.now(),
-        expiresIn:
-          typeof expiresIn === 'string' ? ms(expiresIn) : expiresIn,
+        expiresIn: typeof expiresIn === 'string' ? ms(expiresIn) : expiresIn,
       };
     const cipher = crypto.createCipheriv(this.algorithm, this.key, this.iv);
     const encrypted = cipher
