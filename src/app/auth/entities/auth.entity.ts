@@ -4,11 +4,11 @@ export class Auth {
   @IsString()
   user_name: string;
   @IsEmail()
-  email: string;
+  user_email: string;
   @IsString()
-  password: string;
+  user_password: string;
   @Matches(/^\+(?:[0-9] ?){6,14}[0-9]$/)
-  phone_number: string;
+  user_phone_number: string;
   @IsString()
-  date_of_birth: string;
+  user_date_of_birth: string;
 }

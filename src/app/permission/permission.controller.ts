@@ -12,7 +12,6 @@ import {
 import { PermissionService } from './permission.service';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
-import { ClearDecodedDataPipe } from 'src/common/pipes/clear-decoded-data.pipe';
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
 import {
   GetPermissionListByPaginationDto,
@@ -26,39 +25,45 @@ export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
 
   @Post()
-  @UsePipes(ClearDecodedDataPipe)
   createPermission(@Body() createDto: CreatePermissionDto) {
     return this.permissionService.create(createDto);
   }
 
   @Put()
-  @UsePipes(ClearDecodedDataPipe)
   updatePermission(@Body() updateDto: UpdatePermissionDto) {
     return this.permissionService.update(updateDto);
   }
 
   @Get()
-  @UsePipes(ClearDecodedDataPipe, ParseParamsPaginationPipe)
+  @UsePipes(ParseParamsPaginationPipe)
   getPermissionList(
     @Query() getListByPaginationDto: GetPermissionListByPaginationDto
   ) {
     return this.permissionService.getList(getListByPaginationDto);
   }
 
-  @Get('/options')
+  @Get('options')
   @UsePipes(ParseParamsOptionPipe)
   getOptions(@Query() getOptionsDto: GetPermissionOptionsDto) {
     return this.permissionService.getOptions(getOptionsDto);
   }
 
+  @Get('action-options')
+  getPermissionActionOptions() {
+    return this.permissionService.getPermissionActionOptions();
+  }
+
+  @Get('http-method-options')
+  getHttpMethodOptions() {
+    return this.permissionService.getHttpMethodOptions();
+  }
+
   @Get(':id')
-  @UsePipes(ClearDecodedDataPipe)
   getPermissionDetail(@Param('id') id: Permission['permission_id']) {
     return this.permissionService.getDetail(id);
   }
 
   @Delete()
-  @UsePipes(ClearDecodedDataPipe)
   deletePermissions(@Query('ids') ids: Permission['permission_id'][]) {
     return this.permissionService.remove(ids);
   }

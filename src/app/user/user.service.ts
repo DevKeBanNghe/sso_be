@@ -5,31 +5,47 @@ import {
   DeleteService,
   GetAllService,
   GetDetailService,
-  GetInstanceService,
   UpdateService,
 } from 'src/common/interfaces/service.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
-import { GetUserListByPaginationDto } from './dto/get-user.dto';
+import {
+  GetUserByIDParams,
+  GetUserListByPaginationDto,
+  GetUserPermissionsParams,
+} from './dto/get-user.dto';
 import { User } from './entities/user.entity';
+import { StringUtilService } from 'src/common/utils/string/string-util.service';
+import { BaseInstance } from 'src/common/classes/base.class';
+import { QueryUtilService } from 'src/common/utils/query/query-util.service';
 
 @Injectable()
 export class UserService
+  extends BaseInstance
   implements
     CreateService<CreateUserDto>,
     UpdateService<UpdateUserDto>,
     GetAllService,
     GetDetailService,
-    DeleteService,
-    GetInstanceService
+    DeleteService
 {
   constructor(
     private prismaService: PrismaService,
-    private apiService: ApiService
-  ) {}
+    private apiService: ApiService,
+    private stringUtilService: StringUtilService,
+    private queryUtil: QueryUtilService
+  ) {
+    super();
+  }
 
-  private readonly KEY_SYSTEM: string = 'SYS_ALL';
+  get instance() {
+    return this.prismaService.user;
+  }
+
+  get extended() {
+    return this.prismaService.clientExtended.user;
+  }
 
   remove(ids: User['user_id'][]) {
     return this.prismaService.user.deleteMany({
@@ -40,16 +56,24 @@ export class UserService
       },
     });
   }
+
+  private async getUserByID({ select, user_id }: GetUserByIDParams) {
+    const user = await this.prismaService.user.findFirst({
+      where: { user_id },
+      select,
+    });
+    if (!user) throw new BadRequestException('User not found!');
+    return user;
+  }
+
   async getDetail(id: User['user_id']) {
-    const user = await this.prismaService.user.findUnique({
-      where: { user_id: id },
+    const user = await this.getUserByID({
+      user_id: id,
       select: {
         user_id: true,
         user_name: true,
-        role_id: true,
       },
     });
-    if (!user) throw new BadRequestException('User not found');
     return user;
   }
 
@@ -66,74 +90,131 @@ export class UserService
     });
   }
 
-  async getListByPagination({ page, itemPerPage }: GetUserListByPaginationDto) {
+  async getListByPagination({
+    page,
+    itemPerPage,
+    search = '',
+  }: GetUserListByPaginationDto) {
+    const userFieldsSelect = {
+      user_id: true,
+      user_name: true,
+    };
+
+    const userSearchQuery = this.queryUtil.buildSearchQuery({
+      keys: userFieldsSelect,
+      value: search,
+    });
+
     const skip = (page - 1) * itemPerPage;
-    const list = await this.prismaService.user.findMany({
+    const list = await this.prismaService.clientExtended.user.findMany({
       select: {
-        user_id: true,
-        user_name: true,
-        Role: {
+        ...userFieldsSelect,
+        roles: {
           select: {
-            role_id: true,
-            role_name: true,
+            role: {
+              select: {
+                role_id: true,
+                role_name: true,
+              },
+            },
           },
         },
       },
+      where: {
+        OR: userSearchQuery,
+      },
       skip,
       take: itemPerPage,
-      orderBy: {
-        user_id: 'desc',
-      },
     });
 
-    return this.apiService.formatPagination<typeof list>({
-      list,
-      totalItems: await this.prismaService.user.count(),
+    const listData = list.map((item) => ({
+      ...item,
+      roles: item.roles.map(({ role }) => role),
+    }));
+    return this.apiService.formatPagination<typeof listData>({
+      list: listData,
+      totalItems: await this.instance.count(),
       page,
       itemPerPage,
     });
   }
 
-  getInstance() {
-    return this.prismaService.user;
-  }
+  async update(updateDto: UpdateUserDto) {
+    const {
+      user_id,
+      user_password: user_password_update,
+      ...dataUpdate
+    } = updateDto;
 
-  update(updateDto: UpdateUserDto) {
-    const { user_id, ...dataUpdate } = updateDto;
-    return this.prismaService.user.update({
-      where: { user_id },
-      data: dataUpdate,
+    const user = await this.getUserByID({
+      user_id,
+      select: {
+        user_password: true,
+      },
     });
-  }
 
-  async create(createDto: CreateUserDto) {
-    return await this.prismaService.user.create({
+    const user_password = user_password_update
+      ? await this.stringUtilService.hashSync(user_password_update)
+      : user.user_password;
+    return this.prismaService.clientExtended.user.update({
+      where: { user_id },
       data: {
-        ...createDto,
+        ...dataUpdate,
+        user_password,
       },
     });
   }
 
-  async getRoutersPermission(user_id: User['user_id']) {
+  async create(createDto: CreateUserDto) {
+    return await this.prismaService.clientExtended.user.create({
+      data: {
+        ...createDto,
+      },
+      select: {
+        user_name: true,
+      },
+    });
+  }
+
+  async getUserPermissions({
+    user_id,
+    permission_router,
+    httpMethod,
+  }: GetUserPermissionsParams) {
     const defaultSelect = {
-      RolePermission: {
+      permissions: {
         select: {
-          Permission: {
+          permission: {
             select: {
+              permission_actions: true,
               permission_router: true,
+            },
+          },
+        },
+        where: {
+          permission: {
+            permission_router,
+            permission_actions: {
+              path: [httpMethod],
+              not: null,
             },
           },
         },
       },
     };
-    const data = await this.prismaService.user.findFirst({
+
+    const rolesData = await this.prismaService.user.findFirst({
       select: {
-        Role: {
+        roles: {
           select: {
-            ...defaultSelect,
-            children: {
+            role: {
               select: {
                 ...defaultSelect,
+                children: {
+                  select: {
+                    ...defaultSelect,
+                  },
+                },
               },
             },
           },
@@ -144,37 +225,46 @@ export class UserService
       },
     });
 
-    if (!data) return [];
-    const { Role } = data;
-    const { RolePermission = [], children = [] } = Role ?? {};
-    const permissionRouter = RolePermission.map(
-      (item) => item.Permission.permission_router
-    );
-    const permissionRouterChildren = children.reduce(
-      (acc, { RolePermission }) =>
-        acc.concat(
-          RolePermission.map((item) => item.Permission.permission_router)
-        ),
+    if (!rolesData) return [];
+    const data = rolesData.roles.reduce<Record<string, string[]>[]>(
+      (acc, { role }) => {
+        const permissionData = role.permissions.reduce(
+          (acc, { permission: { permission_actions, permission_router } }) => {
+            for (const [httpMethod, actions] of Object.entries(
+              permission_actions
+            )) {
+              acc.push({ [`${permission_router}_${httpMethod}`]: actions });
+            }
+            return acc;
+          },
+          []
+        );
+        const permissionChildrenData = role.children.reduce(
+          (acc, { permissions }) => {
+            const permissionData = permissions.reduce(
+              (
+                acc,
+                { permission: { permission_actions, permission_router } }
+              ) => {
+                for (const [httpMethod, actions] of Object.entries(
+                  permission_actions
+                )) {
+                  acc.push({ [`${permission_router}_${httpMethod}`]: actions });
+                }
+                return acc;
+              },
+              []
+            );
+            return [...acc, ...permissionData];
+          },
+          []
+        );
+
+        return [...acc, ...permissionData, ...permissionChildrenData];
+      },
       []
     );
-    return [...permissionRouter, ...permissionRouterChildren];
-  }
 
-  async isAdmin(user_id: User['user_id']) {
-    const routersPermission = await this.prismaService.user.findFirst({
-      where: {
-        user_id,
-        Role: {
-          RolePermission: {
-            some: {
-              Permission: {
-                permission_key: this.KEY_SYSTEM,
-              },
-            },
-          },
-        },
-      },
-    });
-    return routersPermission ? true : false;
+    return data;
   }
 }

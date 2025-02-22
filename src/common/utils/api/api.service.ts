@@ -1,13 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, RequestMethod } from '@nestjs/common';
 import { Request } from 'express';
-import { ApiResponse, FormatPagination } from './api.entity';
+import { FormatPagination } from './api.entity';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts/env.const';
-import {
-  PATHS_NOT_AUTH,
-  PATHS_NOT_CHECK_PERMISSION,
-} from 'src/consts/api.const';
+import { PATHS_NOT_AUTH, PATHS_SIGN } from 'src/consts/api.const';
 import { IncomingHttpHeaders } from 'http';
+import { omit } from 'lodash';
+import { FormatResponseParams } from './interfaces/response.interface';
 
 @Injectable()
 export class ApiService {
@@ -19,37 +18,36 @@ export class ApiService {
     return path.slice(0, indexQuery);
   }
   isPathNotAuth(path: string) {
-    path = this.removeQueryParameters(path);
+    const rootPath = this.removeQueryParameters(path);
     return PATHS_NOT_AUTH.includes(
-      path.replace(this.configService.get(EnvVars.SERVER_PREFIX), '')
-    );
-  }
-
-  isPathNotCheckPermission(path: string) {
-    path = this.removeQueryParameters(path);
-    return (
-      this.isPathNotAuth(path) ||
-      PATHS_NOT_CHECK_PERMISSION.includes(
-        path.replace(this.configService.get(EnvVars.SERVER_PREFIX), '')
-      )
+      rootPath.replace(this.configService.get(EnvVars.SERVER_PREFIX), '')
     );
   }
 
   getPayload(req: Request) {
-    return { ...req.query, ...req.params, ...req.body };
+    const data = { ...req.query, ...req.params, ...req.body };
+    const currentPath = req.path;
+    const isSignPath = PATHS_SIGN.some((signPath) =>
+      currentPath.includes(signPath)
+    );
+    return isSignPath
+      ? omit(data, ['user_password', 'confirm_password'])
+      : data;
   }
 
   formatResponse({
     timestamp = new Date().toISOString(),
-    path,
+    path = this.configService.get(EnvVars.SERVER_PREFIX),
     errors = null,
     data = null,
-  }: ApiResponse) {
+    ...params
+  }: FormatResponseParams) {
     return {
       timestamp,
       path,
       errors,
       data,
+      ...params,
     };
   }
 
@@ -61,5 +59,9 @@ export class ApiService {
     const authHeader = headers.authorization;
     if (authHeader?.startsWith('Bearer '))
       return authHeader.substring(7, authHeader.length);
+  }
+
+  getHttpMethods() {
+    return Object.keys(RequestMethod).filter((key) => isNaN(Number(key)));
   }
 }

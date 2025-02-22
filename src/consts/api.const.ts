@@ -1,6 +1,7 @@
+export const PATHS_SIGN = ['/auth/sign-in', '/auth/sign-up'];
+
 export const PATHS_NOT_AUTH = [
-  '/auth/sign-in',
-  '/auth/sign-up',
+  ...PATHS_SIGN,
   '/auth/logout',
   '/auth/refresh-token',
   '/auth/google',
@@ -10,5 +11,3 @@ export const PATHS_NOT_AUTH = [
   '/auth/facebook',
   '/auth/facebook-redirect',
 ];
-
-export const PATHS_NOT_CHECK_PERMISSION = ['/users/info'];

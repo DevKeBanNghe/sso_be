@@ -1,27 +1,32 @@
-export interface CreateService<T = unknown> {
+interface CreateService<T = unknown> {
   create(createDto: T);
 }
 
-export interface UpdateService<T = unknown> {
+interface UpdateService<T = unknown> {
   update(updateDto: T | T[]);
 }
 
-export interface DeleteService<T = string[]> {
+interface DeleteService<T = string[]> {
   remove(ids: T);
 }
 
-export interface GetDetailService<T = string> {
+interface GetDetailService<T = string> {
   getDetail(id: T);
 }
 
-export interface GetAllService<T = unknown> {
+interface GetAllService<T = unknown> {
   getAll(getAllDto?: T);
 }
 
-export interface GetOptionsService<T = unknown> {
+interface GetOptionsService<T = unknown> {
   getOptions(getOptionsDto?: T);
 }
 
-export interface GetInstanceService {
-  getInstance();
-}
+export {
+  CreateService,
+  UpdateService,
+  DeleteService,
+  GetDetailService,
+  GetAllService,
+  GetOptionsService,
+};

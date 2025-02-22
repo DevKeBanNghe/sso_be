@@ -6,6 +6,7 @@ export class CreatePermissionDto extends IntersectionType(
     'permission_name',
     'permission_key',
     'permission_router',
+    'created_by',
   ]),
   PartialType(Permission)
 ) {}

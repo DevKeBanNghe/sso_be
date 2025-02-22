@@ -1,7 +1,7 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class Webpage {
-  @IsNumber()
+  @IsString()
   webpage_id: string;
   @IsString()
   webpage_name: string;
@@ -11,4 +11,5 @@ export class Webpage {
   webpage_key: string;
   @IsString()
   webpage_description: string;
+  created_by: string;
 }

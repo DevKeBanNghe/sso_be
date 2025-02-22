@@ -14,9 +14,15 @@ import {
   GetRoleOptionsDto,
 } from './dto/get-role.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
-import { UpdateRoleDto, UpdateWebpageDto } from './dto/update-role.dto';
+import {
+  UpdateActivateStatusDto,
+  UpdateRoleDto,
+  UpdateWebpageDto,
+} from './dto/update-role.dto';
 import { Webpage } from '../webpage/entities/webpage.entity';
 import { Role } from './entities/role.entity';
+import { QueryUtilService } from 'src/common/utils/query/query-util.service';
+import { isEmpty } from 'lodash';
 
 @Injectable()
 export class RoleService
@@ -30,25 +36,29 @@ export class RoleService
 {
   constructor(
     private prismaService: PrismaService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private queryUtil: QueryUtilService
   ) {}
-  getOptions(getOptionsDto?: GetRoleOptionsDto) {
+  getOptions(getOptionsDto: GetRoleOptionsDto) {
+    const { limit, search = '' } = getOptionsDto ?? {};
+    const fieldsSelect = {
+      role_id: true,
+      role_name: true,
+    };
+    const searchQuery = this.queryUtil.buildSearchQuery({
+      keys: fieldsSelect,
+      value: search,
+    });
     return this.prismaService.role.findMany({
-      select: {
-        role_id: true,
-        role_name: true,
-      },
+      select: fieldsSelect,
       where: {
-        role_name: {
-          contains: getOptionsDto.role_name,
-          mode: 'insensitive',
-        },
+        OR: searchQuery,
       },
-      take: getOptionsDto.limit,
+      take: limit,
     });
   }
   update({ role_id, ...dataUpdate }: UpdateRoleDto) {
-    return this.prismaService.role.update({
+    return this.prismaService.clientExtended.role.update({
       data: dataUpdate,
       where: {
         role_id,
@@ -79,7 +89,7 @@ export class RoleService
     });
   }
   async getDetail(id: Role['role_id']) {
-    const role = await this.prismaService.role.findUnique({
+    const role = await this.prismaService.role.findFirst({
       where: { role_id: id },
       select: {
         role_id: true,
@@ -106,14 +116,22 @@ export class RoleService
     });
   }
 
-  async getListByPagination({ page, itemPerPage }: GetRoleListByPaginationDto) {
+  async getListByPagination({
+    page,
+    itemPerPage,
+    search = '',
+  }: GetRoleListByPaginationDto) {
     const skip = (page - 1) * itemPerPage;
     const fieldsSelectDefault = {
       role_id: true,
       role_name: true,
       role_description: true,
     };
-    const list = await this.prismaService.role.findMany({
+    const searchQuery = this.queryUtil.buildSearchQuery({
+      keys: fieldsSelectDefault,
+      value: search,
+    });
+    const list = await this.prismaService.clientExtended.role.findMany({
       select: {
         ...fieldsSelectDefault,
         children: {
@@ -122,22 +140,31 @@ export class RoleService
           },
         },
       },
+      where: {
+        OR: [
+          ...searchQuery,
+          {
+            children: {
+              some: {
+                OR: [...searchQuery],
+              },
+            },
+          },
+        ],
+      },
       skip,
       take: itemPerPage,
-      orderBy: {
-        role_id: 'desc',
-      },
     });
 
     return this.apiService.formatPagination<typeof list>({
-      list: list.map((item) => ({
-        ...item,
-        children: item.children.length
-          ? item.children.map((child) => ({
+      list: list.map(({ children, ...itemRemain }) => ({
+        ...itemRemain,
+        children: isEmpty(children)
+          ? null
+          : children.map((child) => ({
               ...child,
               key: `role_child_${child.role_id}`,
-            }))
-          : null,
+            })),
       })),
       totalItems: await this.prismaService.role.count(),
       page,
@@ -145,7 +172,7 @@ export class RoleService
     });
   }
   create(createDto: CreateRoleDto) {
-    return this.prismaService.role.create({
+    return this.prismaService.clientExtended.role.create({
       data: {
         ...createDto,
       },
@@ -169,6 +196,17 @@ export class RoleService
       data: {
         webpage_id,
       },
+      where: {
+        role_id: {
+          in: role_ids,
+        },
+      },
+    });
+  }
+
+  updateActivateStatus({ role_ids, ...dataUpdate }: UpdateActivateStatusDto) {
+    return this.prismaService.clientExtended.role.updateMany({
+      data: dataUpdate,
       where: {
         role_id: {
           in: role_ids,

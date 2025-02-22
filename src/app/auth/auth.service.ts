@@ -14,7 +14,11 @@ import {
   SignUpDto,
   SocialsSignDto,
 } from './dto/sign.dto';
-import { AuthToken } from './types/token.type';
+import {
+  AuthToken,
+  RefreshTokenParams,
+  TokenData,
+} from './interfaces/token.interface';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts/env.const';
 import { TypeLogin } from '@prisma/postgresql_client';
@@ -24,8 +28,10 @@ import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { WebpageService } from '../webpage/webpage.service';
 import {
+  COOKIE_ACCESS_TOKEN_KEY,
   COOKIE_REDIRECT_EXPIRE_IN,
   COOKIE_REDIRECT_KEY,
+  COOKIE_REFRESH_TOKEN_KEY,
 } from 'src/consts/cookie.const';
 import ms from 'ms';
 
@@ -52,8 +58,6 @@ export class AuthService {
       });
       return { decoded, error: null };
     } catch (error) {
-      if (error instanceof TokenExpiredError)
-        throw new UnauthorizedException(error);
       return { decoded: null, error };
     }
   }
@@ -72,39 +76,35 @@ export class AuthService {
   }
 
   async signUp(signUpDto: SignUpDto) {
-    const user = await this.userService.getInstance().findFirst({
+    const user = await this.userService.instance.findFirst({
+      select: {
+        user_id: true,
+      },
       where: {
         OR: [
-          { user_email: signUpDto.email },
+          { user_email: signUpDto.user_email },
           { user_name: signUpDto.user_name },
-          { user_phone_number: signUpDto.phone_number },
+          { user_phone_number: signUpDto.user_phone_number },
         ],
       },
     });
-
     if (user) throw new BadRequestException('Information has been registered!');
 
-    signUpDto.password =
-      signUpDto.password ?? this.stringUtilService.genRandom();
-
+    const user_password = await this.stringUtilService.hashSync(
+      signUpDto.user_password ?? this.stringUtilService.genRandom()
+    );
     const userCreated = await this.userService.create({
-      user_email: signUpDto.email,
-      user_password: await this.stringUtilService.hashSync(signUpDto.password),
-      user_name: signUpDto.user_name,
-      user_first_name: signUpDto.user_first_name,
-      user_last_name: signUpDto.user_last_name,
-      user_phone_number: signUpDto.phone_number,
-      user_date_of_birth: signUpDto.date_of_birth,
-      user_image_url: signUpDto.user_image_url,
-      user_type_login: signUpDto.user_type_login,
+      ...signUpDto,
+      user_password,
+      user_name: signUpDto.user_name ?? signUpDto.user_email,
     });
-
     if (!userCreated) throw new BadRequestException('Sign up failed');
 
-    return await this.signIn({
+    const data = await this.signIn({
       user_name: userCreated.user_name,
-      password: signUpDto.password,
+      user_password: signUpDto.user_password,
     });
+    return data;
   }
 
   async signIn(signInDto: SignInDto) {
@@ -117,11 +117,11 @@ export class AuthService {
       ],
       user_type_login: signInDto.user_type_login ?? TypeLogin.ACCOUNT,
     };
-    if (signInDto.password) delete conditionFindUser.user_type_login;
+    if (signInDto.user_password) delete conditionFindUser.user_type_login;
     const defaultPermissionSelect = {
-      RolePermission: {
+      permissions: {
         select: {
-          Permission: {
+          permission: {
             select: {
               permission_key: true,
             },
@@ -129,18 +129,22 @@ export class AuthService {
         },
       },
     };
-    const user = await this.userService.getInstance().findFirst({
+    const user = await this.userService.instance.findFirst({
       where: conditionFindUser,
       select: {
         user_id: true,
         user_name: true,
         user_password: true,
-        Role: {
+        roles: {
           select: {
-            ...defaultPermissionSelect,
-            children: {
+            role: {
               select: {
                 ...defaultPermissionSelect,
+                children: {
+                  select: {
+                    ...defaultPermissionSelect,
+                  },
+                },
               },
             },
           },
@@ -150,34 +154,36 @@ export class AuthService {
 
     if (!user) throw new UnauthorizedException();
 
-    if (signInDto.password) {
+    if (signInDto.user_password) {
       const is_correct_pwd = await this.stringUtilService.compareHashSync(
-        signInDto.password,
+        signInDto.user_password,
         user.user_password
       );
       if (!is_correct_pwd) throw new UnauthorizedException();
     }
 
-    const { user_password, Role, user_id, ...userData } = user;
-    const { RolePermission = [], children = [] } = Role ?? {};
-    const permissionKey = RolePermission.map(
-      (item) => item.Permission.permission_key
-    );
-    const permissionKeyChildren = children.reduce(
-      (acc, { RolePermission }) =>
-        acc.concat(
-          RolePermission.map((item) => item.Permission.permission_key)
-        ),
-      []
-    );
-    const data = {
+    const { user_password, roles, ...userData } = user;
+    const permissions = roles.reduce((acc, { role }) => {
+      const permissionKey = role.permissions.map(
+        ({ permission }) => permission.permission_key
+      );
+      const permissionKeyChildren = role.children.reduce(
+        (acc, { permissions }) =>
+          acc.concat(
+            permissions.map(({ permission }) => permission.permission_key)
+          ),
+        []
+      );
+      acc.push(...permissionKey, ...permissionKeyChildren);
+      return acc;
+    }, []);
+
+    const data: TokenData = {
       ...userData,
-      permissions: [...permissionKey, ...permissionKeyChildren],
+      permissions,
     };
-    return {
-      ...(await this.createToken({ ...data, user_id })),
-      ...data,
-    };
+    const token = await this.createToken(data);
+    return { ...token, ...data };
   }
 
   async signUpWithGoogleOAuth2(user: GoogleUserDto) {
@@ -186,7 +192,7 @@ export class AuthService {
         `Not found user from ${TypeLogin.GOOGLE.toLowerCase()}!`
       );
 
-    const userFind = await this.userService.getInstance().findFirst({
+    const userFind = await this.userService.instance.findFirst({
       where: {
         user_email: user.email,
         user_type_login: TypeLogin.GOOGLE,
@@ -200,13 +206,14 @@ export class AuthService {
       });
 
     return await this.signUp({
-      email: user.email,
+      user_email: user.email,
       user_first_name: user.first_name,
       user_last_name: user.last_name,
       user_name: `${user.first_name} ${user.last_name}`,
-      password: null,
+      user_password: null,
       user_image_url: user.picture,
       user_type_login: TypeLogin.GOOGLE,
+      created_by: user.email,
     });
   }
 
@@ -215,7 +222,7 @@ export class AuthService {
       throw new UnauthorizedException(
         `Not found user from ${TypeLogin.GITHUB.toLowerCase()}!`
       );
-    const userFind = await this.userService.getInstance().findFirst({
+    const userFind = await this.userService.instance.findFirst({
       where: {
         user_email: user.email ?? user.user_name,
         user_type_login: TypeLogin.GITHUB,
@@ -229,13 +236,14 @@ export class AuthService {
       });
 
     return await this.signUp({
-      email: user.email,
+      user_email: user.email,
       user_first_name: user.first_name,
       user_last_name: user.last_name,
       user_name: user.user_name ?? `${user.first_name} ${user.last_name}`,
-      password: null,
+      user_password: null,
       user_image_url: user.avatar_url,
       user_type_login: TypeLogin.GITHUB,
+      created_by: user.email,
     });
   }
 
@@ -244,7 +252,7 @@ export class AuthService {
       throw new UnauthorizedException(
         `Not found user from ${TypeLogin.FACEBOOK.toLowerCase()}!`
       );
-    const userFind = await this.userService.getInstance().findFirst({
+    const userFind = await this.userService.instance.findFirst({
       where: {
         user_email: user.email ?? user.user_name,
         user_type_login: TypeLogin.FACEBOOK,
@@ -258,12 +266,13 @@ export class AuthService {
       });
 
     return await this.signUp({
-      email: user.email,
+      user_email: user.email,
       user_first_name: user.first_name,
       user_last_name: user.last_name,
       user_name: user.user_name ?? `${user.first_name} ${user.last_name}`,
-      password: null,
+      user_password: null,
       user_type_login: TypeLogin.FACEBOOK,
+      created_by: user.email,
     });
   }
 
@@ -272,18 +281,18 @@ export class AuthService {
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
-    const user = await this.userService.getInstance().findFirst({
+    const user = await this.userService.instance.findFirst({
       where: {
         OR: [
-          { user_email: forgotPasswordDto.email },
-          { user_phone_number: forgotPasswordDto.phone_number },
+          { user_email: forgotPasswordDto.user_email },
+          { user_phone_number: forgotPasswordDto.user_phone_number },
         ],
       },
     });
 
     if (!user) throw new UnauthorizedException('Not found user');
 
-    if (forgotPasswordDto.email) {
+    if (forgotPasswordDto.user_email) {
       this.mailerService.sendMail({
         to: user.user_email,
         subject: 'Reset password',
@@ -313,13 +322,13 @@ export class AuthService {
     return await this.userService.update({
       user_id: decoded.user_id,
       user_password: await this.stringUtilService.hashSync(
-        resetPasswordDto.password
+        resetPasswordDto.user_password
       ),
     });
   }
 
   async getWebpageRedirect(webpage_key: string) {
-    const webpage = await this.webpageService.getInstance().findFirst({
+    const data = await this.webpageService.extended.findFirst({
       select: {
         webpage_url: true,
       },
@@ -327,14 +336,21 @@ export class AuthService {
         webpage_key,
       },
     });
-    return webpage ?? { webpage_url: this.configService.get(EnvVars.FE_URL) };
+    return data ?? {};
   }
 
-  async refreshToken(token: string) {
+  async refreshToken({ token, response }: RefreshTokenParams) {
     const { decoded, error } = await this.verifyToken(token);
-    if (error) throw error;
+    if (error) {
+      if (error instanceof TokenExpiredError) {
+        response.clearCookie(COOKIE_ACCESS_TOKEN_KEY);
+        response.clearCookie(COOKIE_REFRESH_TOKEN_KEY);
+      }
+      throw new UnauthorizedException(error);
+    }
     const { exp, ...payload } = decoded;
-    return await this.createToken(payload);
+    const newTokens = await this.createToken(payload);
+    return newTokens;
   }
 
   private saveWebpageKeyToCookie({ webpage_key, res }: SocialsSignDto) {

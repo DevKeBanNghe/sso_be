@@ -33,7 +33,7 @@ export class LoggingInterceptor implements NestInterceptor {
     Logger.log({
       message: '',
       context: contextLog,
-      path: path,
+      path,
       payload: JSON.stringify(this.apiService.getPayload(req)),
       requestId,
     });
@@ -42,7 +42,7 @@ export class LoggingInterceptor implements NestInterceptor {
         Logger.log({
           message: '',
           context: contextLog,
-          path: path,
+          path,
           requestId,
           payload: JSON.stringify(value),
           time: `${Date.now() - now}ms`,

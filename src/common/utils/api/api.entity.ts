@@ -1,13 +1,6 @@
 import { PaginationList } from 'src/common/classes/pagination-list.class';
 
-export class ApiResponse {
-  timestamp?: string;
-  path: string;
-  errors?: [] | null;
-  data?: any;
-}
-
-export class FormatPagination<T = any> extends PaginationList {
+class FormatPagination<T = any> extends PaginationList {
   totalItems: number;
   totalPages?: number;
   list: T;
@@ -20,3 +13,5 @@ export class FormatPagination<T = any> extends PaginationList {
     this.list = list;
   }
 }
+
+export { FormatPagination };

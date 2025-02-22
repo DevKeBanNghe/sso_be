@@ -1,17 +1,8 @@
 import { INestApplication, VersioningType } from '@nestjs/common';
-import { ValidationPipe } from './common/pipes/validation.pipe';
-import { AuthGuard } from './common/guards/auth.guard';
 import { EnvVars } from './consts/env.const';
 import { HttpHeaders } from './consts/enum.const';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ConfigService } from '@nestjs/config';
 import { initSwagger } from './confs/swagger.confs';
-import { FormatResponseInterceptor } from './common/interceptors/format-response.interceptor';
-import { AllExceptionFilter } from './common/filters/all-exception.filter';
-import { ApiService } from './common/utils/api/api.service';
-import { HttpAdapterHost } from '@nestjs/core';
-import { AccessControlGuard } from './common/guards/access-control.guard';
-import { UserService } from './app/user/user.service';
 import { WebpageService } from './app/webpage/webpage.service';
 
 export const initApp = async (app: INestApplication) => {
@@ -22,25 +13,15 @@ export const initApp = async (app: INestApplication) => {
     header: HttpHeaders.VERSION,
     defaultVersion: configService.get(EnvVars.API_VERSION),
   });
-  const webpage_allowed = await app.get(WebpageService).getWhiteList();
+
+  const webpageService = app.get(WebpageService);
+  // const webpageRegisted = await webpageService.getWhiteList();
   app.enableCors({
-    origin: [configService.get(EnvVars.FE_URL), ...webpage_allowed],
+    origin: [configService.get(EnvVars.FE_URL)],
     credentials: true,
   });
-  const apiService = app.get(ApiService);
-  app.useGlobalGuards(
-    new AuthGuard(apiService),
-    new AccessControlGuard(configService, app.get(UserService), apiService)
-  );
-  app.useGlobalPipes(new ValidationPipe());
-  app.useGlobalInterceptors(
-    new FormatResponseInterceptor(apiService),
-    new LoggingInterceptor(apiService, configService)
-  );
-  app.useGlobalFilters(
-    new AllExceptionFilter(app.get(HttpAdapterHost), apiService)
-  );
-  app = initSwagger(app);
 
+  const isDevelopment = configService.get(EnvVars.NODE_ENV) === 'development';
+  if (isDevelopment) app = initSwagger(app);
   return app;
 };

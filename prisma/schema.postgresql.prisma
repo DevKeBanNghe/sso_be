@@ -22,81 +22,106 @@ enum TypeLogin {
 }
 
 model User {
-  user_id            String    @id @default(cuid())
+  user_id            String     @id @default(cuid())
+  is_active          Int        @default(1)
   user_first_name    String?
   user_last_name     String?
   user_name          String
   user_password      String?
-  user_email         String?   @unique
+  user_email         String?    @unique
   user_date_of_birth String?
   user_phone_number  String?
   user_image_url     String?
-  user_type_login    TypeLogin @default(ACCOUNT)
-  Device             Device[]
-  Role               Role?     @relation(fields: [role_id], references: [role_id])
-  role_id            String?
-  created_at         DateTime  @default(now())
-  updated_at         DateTime  @updatedAt
+  user_type_login    TypeLogin  @default(ACCOUNT)
+  devices            Device[]
+  created_at         DateTime   @default(now())
+  created_by         String
+  updated_at         DateTime   @updatedAt
+  updated_by         String?
+  deleted_at         DateTime?
+  roles              UserRole[]
 }
 
 model Device {
-  device_id  String   @id @default(cuid())
+  device_id  String    @id @default(cuid())
+  is_active  Int       @default(1)
   device_ip  String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  User       User?    @relation(fields: [user_id], references: [user_id])
+  created_at DateTime  @default(now())
+  created_by String
+  updated_at DateTime  @updatedAt
+  updated_by String?
+  deleted_at DateTime?
+  user       User?     @relation(fields: [user_id], references: [user_id])
   user_id    String?
 }
 
 model Webpage {
-  webpage_id          String  @id @default(cuid())
+  webpage_id          String    @id @default(cuid())
+  is_active           Int       @default(1)
   webpage_url         String
   webpage_name        String
   webpage_key         String
   webpage_description String?
-  Role                Role[]
+  created_at          DateTime  @default(now())
+  created_by          String
+  updated_at          DateTime  @updatedAt
+  updated_by          String?
+  deleted_at          DateTime?
+  roles               Role[]
 }
 
 model Role {
-  role_id          String   @id @default(cuid())
+  role_id          String           @id @default(cuid())
+  is_active        Int              @default(1)
   role_name        String
   role_description String?
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
-  User             User[]
+  created_at       DateTime         @default(now())
+  created_by       String
+  updated_at       DateTime         @updatedAt
+  updated_by       String?
+  deleted_at       DateTime?
+  parent           Role?            @relation(name: "relationRole", fields: [role_parent_id], references: [role_id], onDelete: Restrict, onUpdate: Restrict)
+  role_parent_id   String?
+  children         Role[]           @relation(name: "relationRole")
+  webpage          Webpage?         @relation(fields: [webpage_id], references: [webpage_id])
+  webpage_id       String?
+  permissions      RolePermission[]
+  users            UserRole[]
+}
 
-  parent         Role?   @relation(name: "relationRole", fields: [role_parent_id], references: [role_id], onDelete: Restrict, onUpdate: Restrict)
-  role_parent_id String?
-  children       Role[]  @relation(name: "relationRole")
+model UserRole {
+  user    User   @relation(fields: [user_id], references: [user_id])
+  user_id String
+  role    Role   @relation(fields: [role_id], references: [role_id])
+  role_id String
 
-  Webpage    Webpage? @relation(fields: [webpage_id], references: [webpage_id])
-  webpage_id String?
-
-  Permission     Permission[]
-  RolePermission RolePermission[]
+  @@id([user_id, role_id])
 }
 
 model RolePermission {
-  Role          Role       @relation(fields: [role_id], references: [role_id])
+  role          Role       @relation(fields: [role_id], references: [role_id])
   role_id       String
-  Permission    Permission @relation(fields: [permission_id], references: [permission_id])
+  permission    Permission @relation(fields: [permission_id], references: [permission_id])
   permission_id String
 
   @@id([role_id, permission_id])
 }
 
 model Permission {
-  permission_id          String   @id @default(cuid())
+  permission_id          String           @id @default(cuid())
+  is_active              Int              @default(1)
   permission_name        String
   permission_description String?
   permission_key         String
-  permission_router      String
-  created_at             DateTime @default(now())
-  updated_at             DateTime @updatedAt
-
-  parent               Permission?      @relation(name: "relationPermission", fields: [permission_parent_id], references: [permission_id], onDelete: Restrict, onUpdate: Restrict)
-  permission_parent_id String?
-  children             Permission[]     @relation(name: "relationPermission")
-  Role                 Role[]
-  RolePermission       RolePermission[]
+  permission_router      String?
+  created_at             DateTime         @default(now())
+  created_by             String
+  updated_at             DateTime         @updatedAt
+  updated_by             String?
+  deleted_at             DateTime?
+  parent                 Permission?      @relation(name: "relationPermission", fields: [permission_parent_id], references: [permission_id], onDelete: Restrict, onUpdate: Restrict)
+  permission_parent_id   String?
+  children               Permission[]     @relation(name: "relationPermission")
+  roles                  RolePermission[]
+  permission_actions     Json?
 }

@@ -4,7 +4,6 @@
   "license": "MIT",
   "scripts": {
     "start": "nx serve",
-    "prod": "npm start -- --configuration=production",
     "build": "nx build",
     "test": "nx test",
     "e2e": "nx e2e e2e",
@@ -24,6 +23,7 @@
   },
   "private": true,
   "dependencies": {
+    "@casl/ability": "^6.7.3",
     "@nestjs-microservice/source": "file:",
     "@nestjs-modules/mailer": "^1.11.2",
     "@nestjs/common": "^10.0.2",
@@ -38,6 +38,7 @@
     "@nestjs/throttler": "^5.1.2",
     "@prisma/client": "^5.12.1",
     "@types/express-useragent": "^1.0.5",
+    "@types/lodash": "^4.17.14",
     "@types/ms": "^0.7.34",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
@@ -49,6 +50,7 @@
     "helmet": "^7.1.0",
     "install": "^0.13.0",
     "joi": "^17.12.2",
+    "lodash": "^4.17.21",
     "mongoose": "^8.2.1",
     "mongoose-autopopulate": "^1.1.0",
     "mongoose-timestamp": "^0.6.0",

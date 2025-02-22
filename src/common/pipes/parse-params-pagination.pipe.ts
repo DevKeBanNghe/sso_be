@@ -6,7 +6,7 @@ export class ParseParamsPaginationPipe implements PipeTransform {
     if (value.itemPerPage) value.itemPerPage = parseInt(value.itemPerPage);
     if (value.page) {
       const page = parseInt(value.page);
-      value.page = page > 0 ? page : 1;
+      value.page = isNaN(page) || page === 0 ? 1 : value.page;
     }
     return value;
   }

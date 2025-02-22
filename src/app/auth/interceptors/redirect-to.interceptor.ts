@@ -1,4 +1,9 @@
-import { CallHandler, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { map } from 'rxjs';
 import { SaveTokenInterceptor } from './save-token.interceptor';
 import { COOKIE_REDIRECT_KEY } from 'src/consts/cookie.const';
@@ -20,7 +25,7 @@ export class RedirectToInterceptor {
           try {
             res.redirect(webpage_url);
           } catch (error) {
-            console.log('🚀 ~ RedirectToInterceptor ~ map ~ error:', error);
+            Logger.error(error.message, { ...data, webpage_url });
           }
         }
         return data;

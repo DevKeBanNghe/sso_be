@@ -1,8 +1,30 @@
-import { IntersectionType, PartialType } from '@nestjs/mapped-types';
+import { IntersectionType, PartialType, PickType } from '@nestjs/mapped-types';
 import { PaginationList } from 'src/common/classes/pagination-list.class';
 import { User } from '../entities/user.entity';
+import { Prisma } from '@prisma/postgresql_client';
+import { DefaultArgs } from '@prisma/postgresql_client/runtime/library';
+import { Permission } from 'src/app/permission/entities/permission.entity';
+import { HttpMethod } from 'src/common/interfaces/http.interface';
 
-export class GetUserListByPaginationDto extends IntersectionType(
+class GetUserListByPaginationDto extends IntersectionType(
   PaginationList,
   PartialType(User)
 ) {}
+
+class GetUserByIDParams {
+  user_id: User['user_id'];
+  select: Prisma.UserSelect<DefaultArgs>;
+}
+
+class GetUserPermissionsParams extends IntersectionType(
+  PickType(User, ['user_id']),
+  PickType(Permission, ['permission_router'])
+) {
+  httpMethod: HttpMethod;
+}
+
+export {
+  GetUserListByPaginationDto,
+  GetUserByIDParams,
+  GetUserPermissionsParams,
+};

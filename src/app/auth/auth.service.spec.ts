@@ -15,17 +15,22 @@ describe('AuthService', () => {
   describe('signIn', () => {
     it('should return auth', async () => {
       const signInDto: SignInDto = {
-        user_name: 'trung@gmail.com',
-        password: '123456',
+        user_name: 'trungcpt@gmail.com',
+        user_password: 'Trungcpt@123',
       };
 
-      const result = {
-        user_name: 'trung',
+      const expectedUserData: SignInDto = {
+        user_name: signInDto.user_name,
       };
 
-      const { access_token, refresh_token, permissions, ...user_data } =
-        await service.signIn(signInDto);
-      expect(user_data).toEqual(result);
+      const {
+        access_token,
+        refresh_token,
+        permissions,
+        user_id,
+        ...user_data
+      } = await service.signIn(signInDto);
+      expect(user_data).toEqual(expectedUserData);
     });
   });
 });

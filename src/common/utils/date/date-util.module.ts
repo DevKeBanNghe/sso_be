@@ -3,5 +3,6 @@ import { DateUtilService } from './date-util.service';
 
 @Module({
   providers: [DateUtilService],
+  exports: [DateUtilService],
 })
 export class DateUtilModule {}

@@ -11,20 +11,27 @@ export class DefaultParamsMiddleware implements NestMiddleware {
     private stringUtilService: StringUtilService,
     private configService: ConfigService
   ) {}
-  private setHeaders(headers: IncomingHttpHeaders) {
-    const instance = {
+  private customHeaders(headers: IncomingHttpHeaders) {
+    const headersValueCustom = {
       [HttpHeaders.REQUEST_ID]:
         headers[HttpHeaders.REQUEST_ID] ?? this.stringUtilService.genRandom(),
       [HttpHeaders.VERSION]:
         headers[HttpHeaders.VERSION] ??
         this.configService.get(EnvVars.API_VERSION),
     };
-    for (const [key, value] of Object.entries(instance)) {
-      headers[key] = value;
-    }
+
+    const data = Object.entries(headersValueCustom).reduce(
+      (acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+      },
+      structuredClone(headers)
+    );
+    return data;
   }
   use(req: Request, res: Response, next: NextFunction) {
-    this.setHeaders(req.headers);
+    const headersCustom = this.customHeaders(req.headers);
+    req.headers = headersCustom;
     next();
   }
 }

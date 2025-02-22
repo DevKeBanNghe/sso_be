@@ -15,9 +15,10 @@ export class SignInDto extends IntersectionType(
 ) {}
 
 export class SignUpDto extends IntersectionType(
-  PickType(Auth, ['email', 'user_name']),
+  PickType(Auth, ['user_email', 'user_name']),
   PartialType(Auth),
-  PartialType(User)
+  PartialType(User),
+  PickType(User, ['created_by'])
 ) {}
 
 export class GoogleUserDto extends GoogleUser {}

@@ -14,9 +14,10 @@ async function bootstrap() {
   app = await initApp(app);
   await app.listen(configService.get(EnvVars.PORT));
   Logger.log(
-    `🚀 Application is running on: ${configService.get(
+    `Application is running on: ${configService.get(
       EnvVars.APP_URL
-    )} (${configService.get(EnvVars.NODE_ENV)})`
+    )} (${configService.get(EnvVars.NODE_ENV)})`,
+    `Start ${configService.get(EnvVars.APP_NAME)}`
   );
 }
 

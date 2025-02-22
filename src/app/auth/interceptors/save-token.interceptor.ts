@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
 import { TokenExpireIn } from 'src/consts/jwt.const';
-import { AuthToken } from '../types/token.type';
+import { AuthToken } from '../interfaces/token.interface';
 import { Request, Response } from 'express';
 import {
   COOKIE_ACCESS_TOKEN_KEY,
@@ -20,12 +20,12 @@ export class SaveTokenInterceptor implements NestInterceptor {
     if (access_token)
       res.cookie(COOKIE_ACCESS_TOKEN_KEY, access_token, {
         httpOnly: true,
-        maxAge: ms(TokenExpireIn.COOKIE_ACCESS_TOKEN_EXPIRE_IN),
+        maxAge: ms(TokenExpireIn.ACCESS_TOKEN_EXPIRE_IN),
       });
     if (refresh_token)
       res.cookie(COOKIE_REFRESH_TOKEN_KEY, refresh_token, {
         httpOnly: true,
-        maxAge: ms(TokenExpireIn.COOKIE_REFRESH_TOKEN_EXPIRE_IN),
+        maxAge: ms(TokenExpireIn.REFRESH_TOKEN_EXPIRE_IN),
       });
   }
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {

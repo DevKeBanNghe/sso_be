@@ -17,6 +17,8 @@ import {
 } from './dto/get-permission.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { Permission } from './entities/permission.entity';
+import { CaslAbilityFactory } from 'src/common/guards/access-control/casl/casl-ability.factory';
+import { QueryUtilService } from 'src/common/utils/query/query-util.service';
 
 @Injectable()
 export class PermissionService
@@ -30,7 +32,9 @@ export class PermissionService
 {
   constructor(
     private prismaService: PrismaService,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private caslAbilityFactory: CaslAbilityFactory,
+    private queryUtil: QueryUtilService
   ) {}
 
   async getPermissionsByRole(getPermissionsByRoleDto: GetPermissionsByRoleDto) {
@@ -39,11 +43,13 @@ export class PermissionService
         permission_key: true,
       },
       where: {
-        Role: {
+        roles: {
           every: {
             role_id: getPermissionsByRoleDto.role_id,
-            Webpage: {
-              webpage_url: getPermissionsByRoleDto.webpage_url,
+            role: {
+              webpage: {
+                webpage_url: getPermissionsByRoleDto.webpage_url,
+              },
             },
           },
         },
@@ -52,7 +58,7 @@ export class PermissionService
   }
 
   update({ permission_id, ...dataUpdate }: UpdatePermissionDto) {
-    return this.prismaService.permission.update({
+    return this.prismaService.clientExtended.permission.update({
       data: dataUpdate,
       where: {
         permission_id,
@@ -85,17 +91,19 @@ export class PermissionService
     });
   }
   async getDetail(id: Permission['permission_id']) {
-    const permission = await this.prismaService.permission.findUnique({
-      where: { permission_id: id },
-      select: {
-        permission_id: true,
-        permission_name: true,
-        permission_description: true,
-        permission_key: true,
-        permission_router: true,
-        permission_parent_id: true,
-      },
-    });
+    const permission =
+      await this.prismaService.clientExtended.permission.findFirst({
+        where: { permission_id: id },
+        select: {
+          permission_id: true,
+          permission_name: true,
+          permission_description: true,
+          permission_key: true,
+          permission_router: true,
+          permission_parent_id: true,
+          permission_actions: true,
+        },
+      });
     if (!permission) throw new BadRequestException('Permission not found');
     return permission;
   }
@@ -118,6 +126,7 @@ export class PermissionService
   async getListByPagination({
     page,
     itemPerPage,
+    search = '',
   }: GetPermissionListByPaginationDto) {
     const skip = (page - 1) * itemPerPage;
     const fieldsSelectDefault = {
@@ -128,7 +137,12 @@ export class PermissionService
       permission_router: true,
     };
 
-    const list = await this.prismaService.permission.findMany({
+    const searchQuery = this.queryUtil.buildSearchQuery({
+      keys: fieldsSelectDefault,
+      value: search,
+    });
+
+    const list = await this.prismaService.clientExtended.permission.findMany({
       select: {
         ...fieldsSelectDefault,
         children: {
@@ -137,11 +151,20 @@ export class PermissionService
           },
         },
       },
+      where: {
+        OR: [
+          ...searchQuery,
+          {
+            children: {
+              some: {
+                OR: [...searchQuery],
+              },
+            },
+          },
+        ],
+      },
       skip,
       take: itemPerPage,
-      orderBy: {
-        permission_id: 'desc',
-      },
     });
 
     return this.apiService.formatPagination<typeof list>({
@@ -162,7 +185,7 @@ export class PermissionService
     });
   }
   create(createDto: CreatePermissionDto) {
-    return this.prismaService.permission.create({
+    return this.prismaService.clientExtended.permission.create({
       data: {
         ...createDto,
       },
@@ -185,7 +208,7 @@ export class PermissionService
 
     const data = await this.prismaService.rolePermission.findMany({
       select: {
-        Permission: {
+        permission: {
           select: {
             permission_id: true,
             permission_name: true,
@@ -193,7 +216,7 @@ export class PermissionService
         },
       },
       where: {
-        Permission: {
+        permission: {
           permission_name: {
             contains: permission_name,
             mode: 'insensitive',
@@ -204,6 +227,14 @@ export class PermissionService
       take: limit,
       distinct: ['permission_id'],
     });
-    return data.map((item) => item.Permission);
+    return data.map((item) => item.permission);
+  }
+
+  getPermissionActionOptions() {
+    return this.caslAbilityFactory.getActions();
+  }
+
+  getHttpMethodOptions() {
+    return this.apiService.getHttpMethods();
   }
 }

@@ -1,4 +1,4 @@
-import { IntersectionType, PartialType } from '@nestjs/mapped-types';
+import { IntersectionType, PartialType, PickType } from '@nestjs/mapped-types';
 import { PaginationList } from 'src/common/classes/pagination-list.class';
 import { Role } from '../entities/role.entity';
 import { OptionParams } from 'src/common/classes/option.class';
@@ -10,5 +10,6 @@ export class GetRoleListByPaginationDto extends IntersectionType(
 
 export class GetRoleOptionsDto extends IntersectionType(
   OptionParams,
-  PartialType(Role)
+  PartialType(Role),
+  PartialType(PickType(PaginationList, ['search']))
 ) {}

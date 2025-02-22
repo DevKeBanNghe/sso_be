@@ -5,6 +5,7 @@ import {
   UpdateService,
 } from 'src/common/interfaces/service.interface';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';
+import { GetRolePermissionListDto } from './dto/get-role-permission.dto';
 
 @Injectable()
 export class RolePermissionService
@@ -27,9 +28,16 @@ export class RolePermissionService
     return {};
   }
 
-  async getAll() {
-    const rolePermissionData =
-      await this.prismaService.rolePermission.findMany();
+  async getAll(params: GetRolePermissionListDto) {
+    const { permission_id_role_id_list } = params ?? {};
+    const whereCondition = {};
+    if (permission_id_role_id_list) {
+      whereCondition['OR'] = permission_id_role_id_list;
+    }
+
+    const rolePermissionData = await this.prismaService.rolePermission.findMany(
+      { where: whereCondition }
+    );
 
     return rolePermissionData.reduce((acc, { permission_id, role_id }) => {
       const indexPermissionExist = acc.findIndex(

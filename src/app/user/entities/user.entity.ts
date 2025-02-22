@@ -1,10 +1,10 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsEmail, IsEnum, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsString } from 'class-validator';
 import { Device } from 'src/app/device/entities/device.entity';
 import { TypeLogin } from '@prisma/postgresql_client';
 
 export class User {
-  @IsNumber()
+  @IsString()
   readonly user_id: string;
   @IsString()
   user_first_name: string;
@@ -24,7 +24,7 @@ export class User {
   @IsString()
   user_image_url: string;
 
-  @IsNumber()
+  @IsString()
   role_id: string;
 
   @IsArray()
@@ -35,4 +35,5 @@ export class User {
   user_type_login: TypeLogin;
   created_at: Date;
   updated_at: Date;
+  created_by: string;
 }

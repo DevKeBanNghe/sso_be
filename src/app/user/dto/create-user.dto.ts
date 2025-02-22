@@ -13,7 +13,7 @@ class UserOption extends PartialType(
 class UserRequired extends PickType(User, [
   'user_email',
   'user_name',
-  'user_password',
+  'created_by',
 ]) {}
 
 export class CreateUserDto extends IntersectionType(UserOption, UserRequired) {}
