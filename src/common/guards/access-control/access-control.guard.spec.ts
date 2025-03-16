@@ -1,6 +1,5 @@
 import { AccessControlGuard } from './access-control.guard';
 import { AutoMockingTestingModule } from '../../testing/auto-mocking/auto-mocking-testing.module';
-
 describe('AccessControlGuard', () => {
   let guard: AccessControlGuard;
 
@@ -9,7 +8,7 @@ describe('AccessControlGuard', () => {
       providers: [AccessControlGuard],
     });
 
-    guard = app.get<AccessControlGuard>(AccessControlGuard);
+    guard = await app.resolve<AccessControlGuard>(AccessControlGuard);
   });
   it('should be defined', () => {
     expect(guard).toBeDefined();

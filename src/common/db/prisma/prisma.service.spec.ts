@@ -8,7 +8,7 @@ describe('PrismaService', () => {
     const module = await AutoMockingTestingModule.createTestingModule({
       imports: [PrismaModule],
     });
-    service = module.get<PrismaService>(PrismaService);
+    service = await module.resolve<PrismaService>(PrismaService);
   });
   it('should be defined', () => {
     expect(service).toBeDefined();

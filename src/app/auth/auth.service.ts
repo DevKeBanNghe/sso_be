@@ -79,7 +79,7 @@ export class AuthService {
   async signUp(signUpDto: SignUpDto) {
     const { user_name, user_email, user_phone_number, user_password } =
       signUpDto;
-    const user = await this.userService.instance.findFirst({
+    const user = await this.userService.extended.findFirst({
       select: {
         user_id: true,
       },
@@ -126,7 +126,7 @@ export class AuthService {
         },
       },
     };
-    const user = await this.userService.instance.findFirst({
+    const user = await this.userService.extended.findFirst({
       where: conditionFindUser,
       select: {
         user_id: true,
@@ -189,7 +189,7 @@ export class AuthService {
         `Not found user from ${TypeLogin.GOOGLE.toLowerCase()}!`
       );
 
-    const userFind = await this.userService.instance.findFirst({
+    const userFind = await this.userService.extended.findFirst({
       where: {
         user_email: user.email,
         user_type_login: TypeLogin.GOOGLE,
@@ -219,7 +219,7 @@ export class AuthService {
       throw new UnauthorizedException(
         `Not found user from ${TypeLogin.GITHUB.toLowerCase()}!`
       );
-    const userFind = await this.userService.instance.findFirst({
+    const userFind = await this.userService.extended.findFirst({
       where: {
         user_email: user.email ?? user.user_name,
         user_type_login: TypeLogin.GITHUB,
@@ -249,7 +249,7 @@ export class AuthService {
       throw new UnauthorizedException(
         `Not found user from ${TypeLogin.FACEBOOK.toLowerCase()}!`
       );
-    const userFind = await this.userService.instance.findFirst({
+    const userFind = await this.userService.extended.findFirst({
       where: {
         user_email: user.email ?? user.user_name,
         user_type_login: TypeLogin.FACEBOOK,
@@ -278,7 +278,7 @@ export class AuthService {
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
-    const user = await this.userService.instance.findFirst({
+    const user = await this.userService.extended.findFirst({
       where: {
         OR: [
           { user_email: forgotPasswordDto.user_email },

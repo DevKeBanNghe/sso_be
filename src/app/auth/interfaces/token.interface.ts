@@ -8,6 +8,7 @@ interface AuthToken {
 interface TokenData {
   permissions: Permission['permission_key'][];
   user_id: User['user_id'];
+  is_supper_admin: User['is_supper_admin'];
   user_name: User['user_name'];
 }
 

@@ -10,7 +10,7 @@ describe('AuthService', () => {
     const moduleRef = await AutoMockingTestingModule.createTestingModule({
       imports: [AuthModule],
     });
-    service = moduleRef.get(AuthService);
+    service = await moduleRef.resolve(AuthService);
   });
   describe('signIn', () => {
     it('should return auth', async () => {
@@ -28,6 +28,7 @@ describe('AuthService', () => {
         refresh_token,
         permissions,
         user_id,
+        is_supper_admin,
         ...user_data
       } = await service.signIn(signInDto);
       expect(user_data).toEqual(expectedUserData);
