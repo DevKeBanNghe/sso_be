@@ -1,7 +1,6 @@
 import { IntersectionType, PartialType, PickType } from '@nestjs/mapped-types';
-import { Role } from '../entities/role.entity';
 import { CreateRoleDto } from './create-role.dto';
-import { Webpage } from 'src/app/webpage/entities/webpage.entity';
+import { Role, Webpage } from '@prisma-postgresql/models';
 
 export class UpdateRoleDto extends IntersectionType(
   PickType(Role, ['role_id']),

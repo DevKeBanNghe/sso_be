@@ -9,22 +9,25 @@ import {
   Post,
   Put,
   Param,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateActivateStatusDto, UpdateUserDto } from './dto/update-user.dto';
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
 import { GetUserListByPaginationDto } from './dto/get-user.dto';
-import { User } from './entities/user.entity';
+import { User } from '@prisma-postgresql/models';
+import { Request } from 'src/common/interfaces/http.interface';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('info')
-  getUserInfo(@Body() body) {
-    const user = body.user;
-    if (!user) throw new UnauthorizedException();
+  getUserInfo(@Req() req: Request) {
+    const user = req.user;
+    const isUserActive = this.userService.isUserActive(user.user_id);
+    if (!user || !isUserActive) throw new UnauthorizedException();
     return user;
   }
 
@@ -52,5 +55,10 @@ export class UserController {
   @Delete()
   deleteUsers(@Query('ids') ids: User['user_id'][]) {
     return this.userService.remove(ids);
+  }
+
+  @Put('activate-status')
+  updateActivateStatus(@Body() payload: UpdateActivateStatusDto) {
+    return this.userService.updateActivateStatus(payload);
   }
 }

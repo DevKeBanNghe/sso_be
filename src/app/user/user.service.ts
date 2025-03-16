@@ -8,17 +8,17 @@ import {
   UpdateService,
 } from 'src/common/interfaces/service.interface';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateActivateStatusDto, UpdateUserDto } from './dto/update-user.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
 import {
   GetUserByIDParams,
   GetUserListByPaginationDto,
   GetUserPermissionsParams,
 } from './dto/get-user.dto';
-import { User } from './entities/user.entity';
 import { StringUtilService } from 'src/common/utils/string/string-util.service';
 import { BaseInstance } from 'src/common/classes/base.class';
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
+import { User } from '@prisma-postgresql/models';
 
 @Injectable()
 export class UserService
@@ -48,11 +48,9 @@ export class UserService
   }
 
   remove(ids: User['user_id'][]) {
-    return this.prismaService.user.deleteMany({
-      where: {
-        user_id: {
-          in: ids,
-        },
+    return this.prismaService.clientExtended.user.softDelete({
+      user_id: {
+        in: ids,
       },
     });
   }
@@ -75,6 +73,14 @@ export class UserService
       },
     });
     return user;
+  }
+
+  async isUserActive(id: User['user_id']) {
+    const user = await this.prismaService.user.findFirst({
+      where: { user_id: id, is_active: 1 },
+      select: { user_id: true },
+    });
+    return user ? true : false;
   }
 
   getList(getListByPaginationDto: GetUserListByPaginationDto) {
@@ -108,7 +114,7 @@ export class UserService
     const skip = (page - 1) * itemPerPage;
     const list = await this.prismaService.clientExtended.user.findMany({
       select: {
-        ...userFieldsSelect,
+        ...{ ...userFieldsSelect, user_type_login: true },
         roles: {
           select: {
             role: {
@@ -266,5 +272,27 @@ export class UserService
     );
 
     return data;
+  }
+
+  updateActivateStatus({ user_ids, ...dataUpdate }: UpdateActivateStatusDto) {
+    return this.prismaService.clientExtended.user.updateMany({
+      data: dataUpdate,
+      where: {
+        user_id: {
+          in: user_ids,
+        },
+      },
+    });
+  }
+
+  async isSupperAdmin({ user_id }: { user_id: User['user_id'] }) {
+    const data = await this.prismaService.clientExtended.user.findFirst({
+      where: {
+        user_id,
+        is_supper_admin: 1,
+        is_active: 1,
+      },
+    });
+    return data ? true : false;
   }
 }

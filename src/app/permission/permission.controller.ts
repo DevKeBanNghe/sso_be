@@ -11,14 +11,17 @@ import {
 } from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { CreatePermissionDto } from './dto/create-permission.dto';
-import { UpdatePermissionDto } from './dto/update-permission.dto';
+import {
+  UpdateActivateStatusDto,
+  UpdatePermissionDto,
+} from './dto/update-permission.dto';
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
 import {
   GetPermissionListByPaginationDto,
   GetPermissionOptionsDto,
 } from './dto/get-permission.dto';
 import { ParseParamsOptionPipe } from 'src/common/pipes/parse-params-option.pipe';
-import { Permission } from './entities/permission.entity';
+import { Permission } from '@prisma-postgresql/models';
 
 @Controller('permissions')
 export class PermissionController {
@@ -66,5 +69,10 @@ export class PermissionController {
   @Delete()
   deletePermissions(@Query('ids') ids: Permission['permission_id'][]) {
     return this.permissionService.remove(ids);
+  }
+
+  @Put('activate-status')
+  updateActivateStatus(@Body() payload: UpdateActivateStatusDto) {
+    return this.permissionService.updateActivateStatus(payload);
   }
 }

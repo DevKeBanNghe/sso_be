@@ -1,6 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateWebpageDto } from './dto/create-webpage.dto';
-import { UpdateWebpageDto } from './dto/update-webpage.dto';
+import {
+  UpdateActivateStatusDto,
+  UpdateWebpageDto,
+} from './dto/update-webpage.dto';
 import {
   CreateService,
   DeleteService,
@@ -16,9 +19,9 @@ import {
 } from './dto/get-webpage.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { RoleService } from '../role/role.service';
-import { Webpage } from './entities/webpage.entity';
 import { BaseInstance } from 'src/common/classes/base.class';
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
+import { Webpage } from '@prisma-postgresql/models';
 
 @Injectable()
 export class WebpageService
@@ -73,11 +76,9 @@ export class WebpageService
     return webpageData;
   }
   remove(ids: Webpage['webpage_id'][]) {
-    return this.prismaService.webpage.deleteMany({
-      where: {
-        webpage_id: {
-          in: ids,
-        },
+    return this.prismaService.clientExtended.webpage.softDelete({
+      webpage_id: {
+        in: ids,
       },
     });
   }
@@ -262,5 +263,19 @@ export class WebpageService
     );
 
     return data;
+  }
+
+  updateActivateStatus({
+    webpage_ids,
+    ...dataUpdate
+  }: UpdateActivateStatusDto) {
+    return this.prismaService.clientExtended.webpage.updateMany({
+      data: dataUpdate,
+      where: {
+        webpage_id: {
+          in: webpage_ids,
+        },
+      },
+    });
   }
 }

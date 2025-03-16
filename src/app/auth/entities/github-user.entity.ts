@@ -1,9 +1,5 @@
-export class GithubUser {
-  email: string;
-  user_name: string;
-  first_name: string;
-  last_name: string;
+import { SocialSignIn } from './auth.entity';
+
+export class GithubUser extends SocialSignIn {
   avatar_url: string;
-  access_token: string;
-  refresh_token: string;
 }

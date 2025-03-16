@@ -13,7 +13,9 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {},
+    "paths": {
+      "@prisma-postgresql/*": ["generated/prisma-postgresql/*"]
+    },
     "esModuleInterop": true
   },
   "files": [],

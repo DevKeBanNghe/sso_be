@@ -22,6 +22,7 @@ export class SaveTokenInterceptor implements NestInterceptor {
         httpOnly: true,
         maxAge: ms(TokenExpireIn.ACCESS_TOKEN_EXPIRE_IN),
       });
+
     if (refresh_token)
       res.cookie(COOKIE_REFRESH_TOKEN_KEY, refresh_token, {
         httpOnly: true,

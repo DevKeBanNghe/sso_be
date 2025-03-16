@@ -21,7 +21,6 @@ import {
 } from './interfaces/token.interface';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts/env.const';
-import { TypeLogin } from '@prisma/postgresql_client';
 import { MailerService } from '@nestjs-modules/mailer';
 import { MailTemplate } from 'src/consts/mail.const';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
@@ -34,6 +33,8 @@ import {
   COOKIE_REFRESH_TOKEN_KEY,
 } from 'src/consts/cookie.const';
 import ms from 'ms';
+import { TypeLogin } from '@prisma-postgresql/enums';
+import { CreateUserDto } from '../user/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -76,48 +77,44 @@ export class AuthService {
   }
 
   async signUp(signUpDto: SignUpDto) {
+    const { user_name, user_email, user_phone_number, user_password } =
+      signUpDto;
     const user = await this.userService.instance.findFirst({
       select: {
         user_id: true,
       },
       where: {
-        OR: [
-          { user_email: signUpDto.user_email },
-          { user_name: signUpDto.user_name },
-          { user_phone_number: signUpDto.user_phone_number },
-        ],
+        OR: [{ user_email }, { user_name }, { user_phone_number }],
       },
     });
     if (user) throw new BadRequestException('Information has been registered!');
 
-    const user_password = await this.stringUtilService.hashSync(
-      signUpDto.user_password ?? this.stringUtilService.genRandom()
+    const passwordHashed = await this.stringUtilService.hashSync(
+      user_password ?? this.stringUtilService.genRandom()
     );
     const userCreated = await this.userService.create({
       ...signUpDto,
-      user_password,
-      user_name: signUpDto.user_name ?? signUpDto.user_email,
-    });
+      user_password: passwordHashed,
+      user_name: user_name ?? user_email,
+    } as CreateUserDto);
     if (!userCreated) throw new BadRequestException('Sign up failed');
-
     const data = await this.signIn({
       user_name: userCreated.user_name,
-      user_password: signUpDto.user_password,
+      user_password,
     });
     return data;
   }
 
   async signIn(signInDto: SignInDto) {
-    const user_name = signInDto.user_name;
+    const { user_name, user_password, user_type_login } = signInDto;
     const conditionFindUser = {
       OR: [
         { user_name },
         { user_email: user_name },
         { user_phone_number: user_name },
       ],
-      user_type_login: signInDto.user_type_login ?? TypeLogin.ACCOUNT,
+      user_type_login: user_password ? TypeLogin.ACCOUNT : user_type_login,
     };
-    if (signInDto.user_password) delete conditionFindUser.user_type_login;
     const defaultPermissionSelect = {
       permissions: {
         select: {
@@ -135,6 +132,7 @@ export class AuthService {
         user_id: true,
         user_name: true,
         user_password: true,
+        is_supper_admin: true,
         roles: {
           select: {
             role: {
@@ -151,18 +149,17 @@ export class AuthService {
         },
       },
     });
-
     if (!user) throw new UnauthorizedException();
 
-    if (signInDto.user_password) {
+    if (user_password) {
       const is_correct_pwd = await this.stringUtilService.compareHashSync(
-        signInDto.user_password,
+        user_password,
         user.user_password
       );
       if (!is_correct_pwd) throw new UnauthorizedException();
     }
 
-    const { user_password, roles, ...userData } = user;
+    const { user_password: userPassword, roles, ...userData } = user;
     const permissions = roles.reduce((acc, { role }) => {
       const permissionKey = role.permissions.map(
         ({ permission }) => permission.permission_key

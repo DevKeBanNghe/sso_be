@@ -1,6 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Scope,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
 import { UserService } from 'src/app/user/user.service';
 import { EnvVars } from 'src/consts/env.const';
 import { ApiService } from '../../utils/api/api.service';
@@ -8,13 +12,13 @@ import { WebpageService } from 'src/app/webpage/webpage.service';
 import { HttpHeaders } from 'src/consts/enum.const';
 import { CaslAbilityFactory } from './casl/casl-ability.factory';
 import { isEmpty } from 'lodash';
-import { HttpMethod } from '../../interfaces/http.interface';
+import { HttpMethod, Request } from '../../interfaces/http.interface';
 import {
   CanAccessResourcesParams,
   GetCurrentRouteParams,
 } from './dto/access-control.dto';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class AccessControlGuard implements CanActivate {
   constructor(
     private configService: ConfigService,
@@ -38,6 +42,9 @@ export class AccessControlGuard implements CanActivate {
     currentRoute,
     requestMethod,
   }: CanAccessResourcesParams) {
+    const isSupperAdmin = await this.userService.isSupperAdmin({ user_id });
+    if (isSupperAdmin) return true;
+
     const webpagePermissions = await this.webpageService.getWebpagePermissions({
       webpage_key,
       permission_router: currentRoute,
@@ -77,9 +84,11 @@ export class AccessControlGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const { getRequest } = context.switchToHttp();
-    const { path, params, method, body, headers } = getRequest<Request>();
-    return true;
+    const { path, params, method, headers, user } = getRequest<Request>();
+
     if (this.apiService.isPathNotAuth(path)) return true;
+
+    if (!user) return false;
 
     const webpage_key = headers[HttpHeaders.WEBPAGE_KEY] as string;
     if (isEmpty(webpage_key)) return false;
@@ -87,13 +96,11 @@ export class AccessControlGuard implements CanActivate {
     const isWebpageValid = await this.isWebpageValid({ webpage_key });
     if (!isWebpageValid) return false;
 
-    const user = body.user;
-    if (!user) return false;
-
     const currentRoute = this.getCurrentRoute({
       requestPath: path,
       requestParams: params,
     });
+
     const canAccess = await this.canAccessResources({
       user_id: user.user_id,
       webpage_key,

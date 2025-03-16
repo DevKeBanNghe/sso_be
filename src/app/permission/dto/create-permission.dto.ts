@@ -1,12 +1,11 @@
-import { IntersectionType, PartialType, PickType } from '@nestjs/mapped-types';
-import { Permission } from '../entities/permission.entity';
+import { OmitType } from '@nestjs/mapped-types';
+import { Permission } from '@prisma-postgresql/models';
+import { TRACKING_MODEL_FIELDS } from 'src/consts/model.const';
 
-export class CreatePermissionDto extends IntersectionType(
-  PickType(Permission, [
-    'permission_name',
-    'permission_key',
-    'permission_router',
-    'created_by',
-  ]),
-  PartialType(Permission)
-) {}
+export class CreatePermissionDto extends OmitType(Permission, [
+  'children',
+  'parent',
+  'roles',
+  'permission_id',
+  ...TRACKING_MODEL_FIELDS,
+]) {}

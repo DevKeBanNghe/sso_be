@@ -1,5 +1,4 @@
-import { Permission } from 'src/app/permission/entities/permission.entity';
-import { Role } from 'src/app/role/entities/role.entity';
+import { Permission, Role } from '@prisma-postgresql/models';
 
 class GetRolePermissionListDto {
   permission_id_role_id_list: Array<{

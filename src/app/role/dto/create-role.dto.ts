@@ -1,7 +1,13 @@
-import { IntersectionType, PartialType, PickType } from '@nestjs/mapped-types';
-import { Role } from '../entities/role.entity';
+import { OmitType } from '@nestjs/mapped-types';
+import { Role } from '@prisma-postgresql/models';
+import { TRACKING_MODEL_FIELDS } from 'src/consts/model.const';
 
-export class CreateRoleDto extends IntersectionType(
-  PickType(Role, ['role_name', 'created_by']),
-  PartialType(Role)
-) {}
+export class CreateRoleDto extends OmitType(Role, [
+  'children',
+  'parent',
+  'users',
+  'permissions',
+  'webpage',
+  'role_id',
+  ...TRACKING_MODEL_FIELDS,
+]) {}

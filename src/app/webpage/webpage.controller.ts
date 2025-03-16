@@ -11,23 +11,26 @@ import {
 } from '@nestjs/common';
 import { WebpageService } from './webpage.service';
 import { CreateWebpageDto } from './dto/create-webpage.dto';
-import { UpdateWebpageDto } from './dto/update-webpage.dto';
+import {
+  UpdateActivateStatusDto,
+  UpdateWebpageDto,
+} from './dto/update-webpage.dto';
 import { GetWebpageListByPaginationDto } from './dto/get-webpage.dto';
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
-import { Webpage } from './entities/webpage.entity';
+import { Webpage } from '@prisma-postgresql/models';
 
 @Controller('webpages')
 export class WebpageController {
-  constructor(private readonly WebpageService: WebpageService) {}
+  constructor(private readonly webpageService: WebpageService) {}
 
   @Post()
   createWebpage(@Body() createDto: CreateWebpageDto) {
-    return this.WebpageService.create(createDto);
+    return this.webpageService.create(createDto);
   }
 
   @Put()
   updateWebpage(@Body() updateDto: UpdateWebpageDto) {
-    return this.WebpageService.update(updateDto);
+    return this.webpageService.update(updateDto);
   }
 
   @Get()
@@ -35,16 +38,21 @@ export class WebpageController {
   getWebpageList(
     @Query() getListByPaginationDto: GetWebpageListByPaginationDto
   ) {
-    return this.WebpageService.getList(getListByPaginationDto);
+    return this.webpageService.getList(getListByPaginationDto);
   }
 
   @Get(':id')
   getWebpageDetail(@Param('id') id: Webpage['webpage_id']) {
-    return this.WebpageService.getDetail(id);
+    return this.webpageService.getDetail(id);
   }
 
   @Delete()
   deleteWebpages(@Query('ids') ids: Webpage['webpage_id'][]) {
-    return this.WebpageService.remove(ids);
+    return this.webpageService.remove(ids);
+  }
+
+  @Put('activate-status')
+  updateActivateStatus(@Body() payload: UpdateActivateStatusDto) {
+    return this.webpageService.updateActivateStatus(payload);
   }
 }

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+dbName=${1:-"postgresql"}
+prismaClient=${2:-"@prisma/client"}
+
+for file in generated/prisma-${dbName}/models/*.ts; do
+    if [ -f "$file" ]; then
+        echo "Replacing @prisma/client => $prismaClient in $file ..."
+        sed -i "s|@prisma/client|$prismaClient|g" "$file"
+    fi
+done
+

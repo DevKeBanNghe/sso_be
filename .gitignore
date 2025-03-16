@@ -53,3 +53,5 @@ data
 .env  
 
 prisma/migrations
+
+generated/

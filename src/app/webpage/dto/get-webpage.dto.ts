@@ -1,7 +1,6 @@
 import { IntersectionType, PartialType, PickType } from '@nestjs/mapped-types';
-import { Webpage } from '../entities/webpage.entity';
+import { Webpage, Permission } from '@prisma-postgresql/models';
 import { PaginationList } from 'src/common/classes/pagination-list.class';
-import { Permission } from 'src/app/permission/entities/permission.entity';
 import { HttpMethod } from 'src/common/interfaces/http.interface';
 
 class GetWebpageListByPaginationDto extends IntersectionType(

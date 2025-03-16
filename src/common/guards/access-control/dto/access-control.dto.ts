@@ -1,7 +1,6 @@
 import { IntersectionType, PickType } from '@nestjs/mapped-types';
-import { User } from 'src/app/user/entities/user.entity';
+import { User, Webpage } from '@prisma-postgresql/models';
 import { Request } from 'express';
-import { Webpage } from 'src/app/webpage/entities/webpage.entity';
 import { HttpMethod } from 'src/common/interfaces/http.interface';
 
 class CanAccessResourcesParams extends IntersectionType(

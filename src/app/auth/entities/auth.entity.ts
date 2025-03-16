@@ -1,14 +1,18 @@
-import { IsEmail, IsString, Matches } from 'class-validator';
+import { PickType } from '@nestjs/mapped-types';
+import { User } from '@prisma-postgresql/models';
 
-export class Auth {
-  @IsString()
-  user_name: string;
-  @IsEmail()
-  user_email: string;
-  @IsString()
-  user_password: string;
-  @Matches(/^\+(?:[0-9] ?){6,14}[0-9]$/)
-  user_phone_number: string;
-  @IsString()
-  user_date_of_birth: string;
+export class Auth extends PickType(User, [
+  'user_name',
+  'user_email',
+  'user_password',
+  'user_phone_number',
+  'user_date_of_birth',
+]) {}
+
+export class SocialSignIn extends PickType(Auth, ['user_name']) {
+  email: string;
+  first_name: string;
+  last_name: string;
+  access_token: string;
+  refresh_token: string;
 }

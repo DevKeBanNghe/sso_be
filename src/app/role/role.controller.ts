@@ -18,7 +18,7 @@ import {
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
 import { UpdateActivateStatusDto, UpdateRoleDto } from './dto/update-role.dto';
 import { ParseParamsOptionPipe } from 'src/common/pipes/parse-params-option.pipe';
-import { Role } from './entities/role.entity';
+import { Role } from '@prisma-postgresql/models';
 
 @Controller('roles')
 export class RoleController {

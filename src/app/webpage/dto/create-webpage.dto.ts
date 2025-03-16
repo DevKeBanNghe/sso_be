@@ -1,10 +1,11 @@
-import { IntersectionType, PartialType, PickType } from '@nestjs/mapped-types';
-import { Webpage } from '../entities/webpage.entity';
-import { Role } from 'src/app/role/entities/role.entity';
+import { OmitType } from '@nestjs/mapped-types';
+import { Webpage, Role } from '@prisma-postgresql/models';
+import { TRACKING_MODEL_FIELDS } from 'src/consts/model.const';
 
-export class CreateWebpageDto extends IntersectionType(
-  PartialType(PickType(Webpage, ['webpage_description', 'webpage_id'])),
-  Webpage
-) {
+export class CreateWebpageDto extends OmitType(Webpage, [
+  'roles',
+  'webpage_id',
+  ...TRACKING_MODEL_FIELDS,
+]) {
   role_ids: Role['role_id'][];
 }

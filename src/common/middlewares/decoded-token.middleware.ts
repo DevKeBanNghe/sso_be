@@ -30,7 +30,8 @@ export class DecodedTokenMiddleware implements NestMiddleware {
     if (error) throw error;
 
     const { exp, ...payload } = decoded;
-    req.body.user = payload;
+    const userRequest = req.user ?? {};
+    req.user = { ...userRequest, ...payload };
     return next();
   }
 }

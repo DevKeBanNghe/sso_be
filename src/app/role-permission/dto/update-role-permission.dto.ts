@@ -1,6 +1,5 @@
 import { PickType } from '@nestjs/mapped-types';
-import { Permission } from 'src/app/permission/entities/permission.entity';
-import { Role } from 'src/app/role/entities/role.entity';
+import { Permission, Role } from '@prisma-postgresql/models';
 
 export class UpdateRolePermissionDto extends PickType(Permission, [
   'permission_id',

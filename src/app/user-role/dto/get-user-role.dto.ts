@@ -1,5 +1,4 @@
-import { Role } from 'src/app/role/entities/role.entity';
-import { User } from 'src/app/user/entities/user.entity';
+import { User, Role } from '@prisma-postgresql/models';
 
 class GetUserRoleListDto {
   user_id_role_id_list: Array<{

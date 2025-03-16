@@ -6,3 +6,5 @@ Dockerfile
 logs
 *.prisma
 *.spec.ts
+scripts
+generated

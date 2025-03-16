@@ -1,14 +1,17 @@
 import {
+  Inject,
   Injectable,
   Logger,
   OnModuleDestroy,
   OnModuleInit,
+  Scope,
 } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/postgresql_client';
-import { CreateExtends, UpdateExtends } from './interfaces/create.interface';
 import { DateUtilService } from 'src/common/utils/date/date-util.service';
-
-@Injectable()
+import { omit } from 'lodash';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'src/common/interfaces/http.interface';
+@Injectable({ scope: Scope.REQUEST })
 export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
@@ -17,7 +20,10 @@ export class PrismaService
   private readonly RETRY_AFTER = 3000; // ms
   private _clientExtended: ReturnType<typeof this.initClientExtended>;
 
-  constructor(private dateUtilService: DateUtilService) {
+  constructor(
+    private dateUtilService: DateUtilService,
+    @Inject(REQUEST) private request: Request
+  ) {
     super({
       transactionOptions: {
         // This feature is not available on MongoDB, because MongoDB does not support isolation levels.
@@ -27,6 +33,19 @@ export class PrismaService
       },
     });
     this.initClientExtended();
+  }
+
+  filterArgs({ data, model }) {
+    switch (model) {
+      case 'User':
+        return omit(data, ['is_supper_admin']);
+      default:
+        return data;
+    }
+  }
+
+  getCurrentUser(data) {
+    return data?.user_name ?? this.request?.user?.user_name;
   }
 
   initClientExtended() {
@@ -50,28 +69,28 @@ export class PrismaService
             args.orderBy = [{ updated_at: 'desc' }, { created_at: 'desc' }];
             return query(args);
           },
-          create: async ({ args, query }) => {
-            const { user, ...argsRemain } = args.data as CreateExtends<
-              typeof args.data
-            >;
-            const currentUser =
-              user?.user_name ??
-              ('user_name' in argsRemain ? argsRemain.user_name : null);
-            args.data = { ...argsRemain, created_by: currentUser };
+          create: async ({ args, query, model }) => {
+            const filterData = this.filterArgs({ data: args.data, model });
+            const currentUser = this.getCurrentUser(filterData);
+            args.data = { ...filterData, created_by: currentUser };
             return query(args);
           },
-          update: async ({ args, query }) => {
-            const { user, ...argsRemain } = args.data as UpdateExtends<
-              typeof args.data
-            >;
-            args.data = { ...argsRemain, updated_by: user.user_name };
+          update: async ({ args, query, model }) => {
+            const filterData = this.filterArgs({ data: args.data, model });
+            const currentUser = this.getCurrentUser(filterData);
+            args.data = {
+              ...filterData,
+              updated_by: currentUser,
+            };
             return query(args);
           },
-          updateMany: async ({ args, query }) => {
-            const { user, ...argsRemain } = args.data as UpdateExtends<
-              typeof args.data
-            >;
-            args.data = { ...argsRemain, updated_by: user.user_name };
+          updateMany: async ({ args, query, model }) => {
+            const filterData = this.filterArgs({ data: args.data, model });
+            const currentUser = this.getCurrentUser(filterData);
+            args.data = {
+              ...filterData,
+              updated_by: currentUser,
+            };
             return query(args);
           },
         },
@@ -82,20 +101,20 @@ export class PrismaService
             this: T,
             where: Prisma.Args<T, 'deleteMany'>['where']
           ) {
-            const context = Prisma.getExtensionContext(this) as any;
+            const context: any = Prisma.getExtensionContext(this);
             const result = await context.updateMany({
-              data: { deleted_at: new Date() },
+              data: { deleted_at: new Date(), is_active: 0 },
               where,
             });
             return result;
           },
           async restore<T>(
             this: T,
-            where: Prisma.Args<T, 'findMany'>['where']
+            where: Prisma.Args<T, 'updateMany'>['where']
           ) {
-            const context = Prisma.getExtensionContext(this) as any;
+            const context: any = Prisma.getExtensionContext(this);
             const result = await context.updateMany({
-              data: { deleted_at: null },
+              data: { deleted_at: null, is_active: 0 },
               where,
             });
             return result;

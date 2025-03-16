@@ -19,10 +19,9 @@ import {
   UpdateRoleDto,
   UpdateWebpageDto,
 } from './dto/update-role.dto';
-import { Webpage } from '../webpage/entities/webpage.entity';
-import { Role } from './entities/role.entity';
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
 import { isEmpty } from 'lodash';
+import { Role, Webpage } from '@prisma-postgresql/models';
 
 @Injectable()
 export class RoleService
@@ -80,11 +79,9 @@ export class RoleService
   }
   async remove(ids: Role['role_id'][]) {
     await this.removeRoleChildren(ids);
-    return await this.prismaService.role.deleteMany({
-      where: {
-        role_id: {
-          in: ids,
-        },
+    return await this.prismaService.clientExtended.role.softDelete({
+      role_id: {
+        in: ids,
       },
     });
   }

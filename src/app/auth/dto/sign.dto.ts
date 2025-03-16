@@ -1,11 +1,10 @@
 import { IntersectionType, PartialType, PickType } from '@nestjs/mapped-types';
 import { Auth } from '../entities/auth.entity';
-import { User } from 'src/app/user/entities/user.entity';
-import { Webpage } from 'src/app/webpage/entities/webpage.entity';
 import { GoogleUser } from '../entities/google-user.entity';
 import { GithubUser } from '../entities/github-user.entity';
 import { FacebookUser } from '../entities/facebook-user.entity';
 import { Response } from 'express';
+import { User, Webpage } from '@prisma-postgresql/models';
 
 export class SignInDto extends IntersectionType(
   PickType(Auth, ['user_name']),
@@ -17,8 +16,7 @@ export class SignInDto extends IntersectionType(
 export class SignUpDto extends IntersectionType(
   PickType(Auth, ['user_email', 'user_name']),
   PartialType(Auth),
-  PartialType(User),
-  PickType(User, ['created_by'])
+  PartialType(User)
 ) {}
 
 export class GoogleUserDto extends GoogleUser {}

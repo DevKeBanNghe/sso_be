@@ -12,7 +12,6 @@ import { GoogleStrategy } from './strategies/google-oauth2.strategy';
 import { GithubStrategy } from './strategies/github.strategy';
 import { SaveTokenInterceptor } from './interceptors/save-token.interceptor';
 import { WebpageModule } from '../webpage/webpage.module';
-import { FacebookStrategy } from './strategies/facebook.strategy';
 @Module({
   imports: [
     UserModule,
@@ -40,7 +39,7 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
     ConfigService,
     GithubStrategy,
     SaveTokenInterceptor,
-    FacebookStrategy,
+    // FacebookStrategy,
   ],
   exports: [AuthService],
 })

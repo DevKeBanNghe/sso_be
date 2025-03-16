@@ -1,8 +1,5 @@
-export class GoogleUser {
-  email: string;
-  first_name: string;
-  last_name: string;
+import { SocialSignIn } from './auth.entity';
+
+export class GoogleUser extends SocialSignIn {
   picture: string;
-  access_token: string;
-  refresh_token: string;
 }

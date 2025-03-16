@@ -1,6 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreatePermissionDto } from './dto/create-permission.dto';
-import { UpdatePermissionDto } from './dto/update-permission.dto';
+import {
+  UpdateActivateStatusDto,
+  UpdatePermissionDto,
+} from './dto/update-permission.dto';
 import {
   CreateService,
   DeleteService,
@@ -16,9 +19,9 @@ import {
   GetPermissionsByRoleDto,
 } from './dto/get-permission.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
-import { Permission } from './entities/permission.entity';
 import { CaslAbilityFactory } from 'src/common/guards/access-control/casl/casl-ability.factory';
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
+import { Permission } from '@prisma-postgresql/models';
 
 @Injectable()
 export class PermissionService
@@ -37,7 +40,7 @@ export class PermissionService
     private queryUtil: QueryUtilService
   ) {}
 
-  async getPermissionsByRole(getPermissionsByRoleDto: GetPermissionsByRoleDto) {
+  async getPermissionsByRole({ webpage_url, roles }: GetPermissionsByRoleDto) {
     return this.prismaService.permission.findMany({
       select: {
         permission_key: true,
@@ -45,10 +48,10 @@ export class PermissionService
       where: {
         roles: {
           every: {
-            role_id: getPermissionsByRoleDto.role_id,
+            role_id: { in: roles.map((item) => item.role_id) },
             role: {
               webpage: {
-                webpage_url: getPermissionsByRoleDto.webpage_url,
+                webpage_url,
               },
             },
           },
@@ -82,11 +85,9 @@ export class PermissionService
   }
   async remove(ids: Permission['permission_id'][]) {
     await this.removePermissionChildren(ids);
-    return this.prismaService.permission.deleteMany({
-      where: {
-        permission_id: {
-          in: ids,
-        },
+    return this.prismaService.clientExtended.permission.softDelete({
+      permission_id: {
+        in: ids,
       },
     });
   }
@@ -236,5 +237,19 @@ export class PermissionService
 
   getHttpMethodOptions() {
     return this.apiService.getHttpMethods();
+  }
+
+  updateActivateStatus({
+    permission_ids,
+    ...dataUpdate
+  }: UpdateActivateStatusDto) {
+    return this.prismaService.clientExtended.permission.updateMany({
+      data: dataUpdate,
+      where: {
+        permission_id: {
+          in: permission_ids,
+        },
+      },
+    });
   }
 }

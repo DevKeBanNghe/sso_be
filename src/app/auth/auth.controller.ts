@@ -33,7 +33,7 @@ import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
 import { GithubGuard } from './guards/github.guard';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { FacebookGuard } from './guards/facebook.guard';
-import { TypeLogin } from '@prisma/postgresql_client';
+import { TypeLogin } from '@prisma-postgresql/enums';
 
 @Controller('auth')
 export class AuthController {
