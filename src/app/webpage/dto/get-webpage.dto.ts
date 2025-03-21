@@ -16,9 +16,11 @@ class GetWebpagePermissionsParams extends IntersectionType(
 ) {
   httpMethod: HttpMethod;
 }
+class GetDetailByParams extends PickType(Webpage, ['webpage_key']) {}
 
 export {
   IsExistWebpageParams,
   GetWebpageListByPaginationDto,
   GetWebpagePermissionsParams,
+  GetDetailByParams,
 };

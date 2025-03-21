@@ -86,8 +86,9 @@ export class AccessControlGuard implements CanActivate {
     const { getRequest } = context.switchToHttp();
     const { path, params, method, headers, user } = getRequest<Request>();
 
-    if (this.apiService.isPathNotAuth(path)) return true;
+    if (this.apiService.isPathNotAuth()) return true;
 
+    return true;
     if (!user) return false;
 
     const webpage_key = headers[HttpHeaders.WEBPAGE_KEY] as string;

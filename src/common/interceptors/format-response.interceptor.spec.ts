@@ -9,7 +9,7 @@ describe('FormatResponseInterceptor', () => {
       providers: [FormatResponseInterceptor],
     });
 
-    interceptor = app.get(FormatResponseInterceptor);
+    interceptor = await app.resolve(FormatResponseInterceptor);
   });
   it('should be defined', () => {
     expect(interceptor).toBeDefined();

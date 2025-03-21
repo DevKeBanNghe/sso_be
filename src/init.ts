@@ -14,10 +14,14 @@ export const initApp = async (app: INestApplication) => {
     defaultVersion: configService.get(EnvVars.API_VERSION),
   });
 
-  const webpageService = app.get(WebpageService);
-  // const webpageRegisted = await webpageService.getWhiteList();
+  const webpageService = await app.resolve(WebpageService);
+  const webpageRegisted = await webpageService.getWhiteList();
   app.enableCors({
-    origin: [configService.get(EnvVars.FE_URL)],
+    origin: [
+      configService.get(EnvVars.FE_URL),
+      ...webpageRegisted,
+      'http://localhost:9999',
+    ],
     credentials: true,
   });
 

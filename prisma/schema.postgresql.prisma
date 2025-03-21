@@ -27,25 +27,26 @@ enum TypeLogin {
 }
 
 model User {
-  user_id            String     @id @default(cuid())
-  is_active          Int        @default(1)
-  is_supper_admin    Int        @default(0)
+  user_id            String        @id @default(cuid())
+  is_active          Int           @default(1)
+  is_supper_admin    Int           @default(0)
   user_first_name    String?
   user_last_name     String?
   user_name          String
   user_password      String?
-  user_email         String?    @unique
+  user_email         String?       @unique
   user_date_of_birth String?
   user_phone_number  String?
   user_image_url     String?
-  user_type_login    TypeLogin  @default(ACCOUNT)
+  user_type_login    TypeLogin     @default(ACCOUNT)
   devices            Device[]
-  created_at         DateTime   @default(now())
+  created_at         DateTime      @default(now())
   created_by         String?
-  updated_at         DateTime   @updatedAt
+  updated_at         DateTime      @updatedAt
   updated_by         String?
   deleted_at         DateTime?
   roles              UserRole[]
+  webpages           UserWebpage[]
 }
 
 model Device {
@@ -62,18 +63,28 @@ model Device {
 }
 
 model Webpage {
-  webpage_id          String    @id @default(cuid())
-  is_active           Int       @default(1)
+  webpage_id          String        @id @default(cuid())
+  is_active           Int           @default(1)
   webpage_url         String
   webpage_name        String
   webpage_key         String
   webpage_description String?
-  created_at          DateTime  @default(now())
+  created_at          DateTime      @default(now())
   created_by          String?
-  updated_at          DateTime  @updatedAt
+  updated_at          DateTime      @updatedAt
   updated_by          String?
   deleted_at          DateTime?
   roles               Role[]
+  users               UserWebpage[]
+}
+
+model UserWebpage {
+  user       User    @relation(fields: [user_id], references: [user_id])
+  user_id    String
+  webpage    Webpage @relation(fields: [webpage_id], references: [webpage_id])
+  webpage_id String
+
+  @@id([user_id, webpage_id])
 }
 
 model Role {

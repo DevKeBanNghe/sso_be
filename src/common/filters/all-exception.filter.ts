@@ -65,7 +65,7 @@ export class AllExceptionFilter implements ExceptionFilter {
       Logger.error({
         path,
         requestId: request.headers[HttpHeaders.REQUEST_ID],
-        payload: JSON.stringify(this.apiService.getPayload(request)),
+        payload: JSON.stringify(this.apiService.getPayload()),
         errors: JSON.stringify(errorsInfo),
         message: `[${className}]`,
       });

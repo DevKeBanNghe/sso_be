@@ -10,7 +10,7 @@ describe('ApiService', () => {
       providers: [ApiService, ConfigService],
     }).compile();
 
-    service = module.get<ApiService>(ApiService);
+    service = await module.resolve<ApiService>(ApiService);
   });
 
   it('should be defined', () => {

@@ -4,6 +4,7 @@ import { TRACKING_MODEL_FIELDS } from 'src/consts/model.const';
 
 export class CreateWebpageDto extends OmitType(Webpage, [
   'roles',
+  'users',
   'webpage_id',
   ...TRACKING_MODEL_FIELDS,
 ]) {

@@ -1,30 +1,41 @@
-import { Injectable, RequestMethod } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  RequestMethod,
+  Scope,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { FormatPagination } from './api.entity';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts/env.const';
 import { PATHS_NOT_AUTH, PATHS_SIGN } from 'src/consts/api.const';
-import { IncomingHttpHeaders } from 'http';
 import { omit } from 'lodash';
 import { FormatResponseParams } from './interfaces/response.interface';
+import { HttpHeaders } from 'src/consts/enum.const';
+import { REQUEST } from '@nestjs/core';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class ApiService {
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    @Inject(REQUEST) private req: Request
+  ) {}
 
   private removeQueryParameters(path: string) {
     const indexQuery = path.indexOf('?');
-    if (indexQuery < 0) return path;
-    return path.slice(0, indexQuery);
+    return indexQuery > 0 ? path.slice(0, indexQuery) : path;
   }
-  isPathNotAuth(path: string) {
-    const rootPath = this.removeQueryParameters(path);
+
+  isPathNotAuth() {
+    const rootPath = this.removeQueryParameters(this.req.originalUrl);
     return PATHS_NOT_AUTH.includes(
       rootPath.replace(this.configService.get(EnvVars.SERVER_PREFIX), '')
     );
   }
 
-  getPayload(req: Request) {
+  getPayload() {
+    const req = this.req;
     const data = { ...req.query, ...req.params, ...req.body };
     const currentPath = req.path;
     const isSignPath = PATHS_SIGN.some((signPath) =>
@@ -55,13 +66,19 @@ export class ApiService {
     return new FormatPagination<T>(formatPagination);
   }
 
-  getBearerToken(headers: IncomingHttpHeaders) {
-    const authHeader = headers.authorization;
+  getBearerToken() {
+    const authHeader = this.req.headers.authorization;
     if (authHeader?.startsWith('Bearer '))
       return authHeader.substring(7, authHeader.length);
   }
 
   getHttpMethods() {
     return Object.keys(RequestMethod).filter((key) => isNaN(Number(key)));
+  }
+
+  getHeadersParam({ key }: { key: HttpHeaders }) {
+    const data = this.req.headers[key] as string;
+    if (!data) throw new BadRequestException(`${key} not found in headers`);
+    return data;
   }
 }

@@ -39,6 +39,8 @@ export class PrismaService
     switch (model) {
       case 'User':
         return omit(data, ['is_supper_admin']);
+      case 'UserWebpage':
+        return omit(data, ['created_by']);
       default:
         return data;
     }
@@ -70,9 +72,12 @@ export class PrismaService
             return query(args);
           },
           create: async ({ args, query, model }) => {
-            const filterData = this.filterArgs({ data: args.data, model });
-            const currentUser = this.getCurrentUser(filterData);
-            args.data = { ...filterData, created_by: currentUser };
+            const argsData = args.data;
+            const filterData = this.filterArgs({
+              data: { ...argsData, created_by: this.getCurrentUser(argsData) },
+              model,
+            });
+            args.data = filterData;
             return query(args);
           },
           update: async ({ args, query, model }) => {

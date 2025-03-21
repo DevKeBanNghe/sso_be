@@ -7,18 +7,24 @@ import {
   GetDetailService,
   UpdateService,
 } from 'src/common/interfaces/service.interface';
-import { CreateUserDto } from './dto/create-user.dto';
+import {
+  CreateUserDto,
+  CreateUsersSubscribeWebpageDto,
+} from './dto/create-user.dto';
 import { UpdateActivateStatusDto, UpdateUserDto } from './dto/update-user.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
 import {
   GetUserByIDParams,
+  GetUserByParams,
   GetUserListByPaginationDto,
   GetUserPermissionsParams,
+  GetUsersSubscribeWebpageDto,
 } from './dto/get-user.dto';
 import { StringUtilService } from 'src/common/utils/string/string-util.service';
 import { BaseInstance } from 'src/common/classes/base.class';
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
 import { User } from '@prisma-postgresql/models';
+import { WebpageService } from '../webpage/webpage.service';
 
 @Injectable()
 export class UserService
@@ -34,7 +40,8 @@ export class UserService
     private prismaService: PrismaService,
     private apiService: ApiService,
     private stringUtilService: StringUtilService,
-    private queryUtil: QueryUtilService
+    private queryUtil: QueryUtilService,
+    private webpageService: WebpageService
   ) {
     super();
   }
@@ -87,6 +94,7 @@ export class UserService
     if (!getListByPaginationDto.page) return this.getAll();
     return this.getListByPagination(getListByPaginationDto);
   }
+
   getAll() {
     return this.prismaService.user.findMany({
       select: {
@@ -178,6 +186,7 @@ export class UserService
       },
       select: {
         user_name: true,
+        user_id: true,
       },
     });
   }
@@ -294,5 +303,50 @@ export class UserService
       },
     });
     return data ? true : false;
+  }
+
+  async getUserBy({ user_email }: GetUserByParams) {
+    const user = await this.prismaService.user.findFirst({
+      select: { user_id: true },
+      where: { user_email },
+    });
+    return user;
+  }
+
+  async createUsersSubscribeWebpage({
+    webpage_key,
+    user_email,
+  }: CreateUsersSubscribeWebpageDto) {
+    const webpage = await this.webpageService.getDetailBy({ webpage_key });
+    const user = await this.getUserBy({ user_email });
+    let user_id = user?.user_id;
+    if (!user_id) {
+      const { user_id: userIDSignUp } = await this.create({
+        user_name: user_email,
+        user_email,
+      });
+      user_id = userIDSignUp;
+    }
+    const data = await this.prismaService.clientExtended.userWebpage.create({
+      data: { webpage_id: webpage.webpage_id, user_id },
+    });
+    return data;
+  }
+
+  async getUsersSubscribeWebpage({ webpage_key }: GetUsersSubscribeWebpageDto) {
+    const data = await this.prismaService.userWebpage.findMany({
+      select: {
+        user: {
+          select: {
+            user_id: true,
+            user_email: true,
+          },
+        },
+      },
+      where: {
+        webpage: { webpage_key },
+      },
+    });
+    return data.map((item) => item.user);
   }
 }

@@ -19,10 +19,10 @@ export class DecodedTokenMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    if (this.apiService.isPathNotAuth(req.originalUrl)) return next();
+    if (this.apiService.isPathNotAuth()) return next();
     const token =
       req.cookies[COOKIE_ACCESS_TOKEN_KEY] ??
-      this.apiService.getBearerToken(req.headers) ??
+      this.apiService.getBearerToken() ??
       req.cookies[COOKIE_REFRESH_TOKEN_KEY];
 
     if (!token) throw new UnauthorizedException('Token is required!');

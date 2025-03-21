@@ -13,6 +13,7 @@ import {
 } from 'src/common/interfaces/service.interface';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';
 import {
+  GetDetailByParams,
   GetWebpageListByPaginationDto,
   GetWebpagePermissionsParams,
   IsExistWebpageParams,
@@ -22,6 +23,7 @@ import { RoleService } from '../role/role.service';
 import { BaseInstance } from 'src/common/classes/base.class';
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
 import { Webpage } from '@prisma-postgresql/models';
+import { uniq } from 'lodash';
 
 @Injectable()
 export class WebpageService
@@ -162,7 +164,14 @@ export class WebpageService
 
   async getWhiteList() {
     const data = await this.getAll();
-    return data.map((item) => item.webpage_url);
+    const webpages = data.map(({ webpage_url }) => {
+      const thirdSlash = webpage_url.indexOf(
+        '/',
+        webpage_url.indexOf('//') + 2
+      );
+      return thirdSlash > 0 ? webpage_url.slice(0, thirdSlash) : webpage_url;
+    }, []);
+    return uniq(webpages);
   }
 
   async isExistWebpage({ webpage_key }: IsExistWebpageParams) {
@@ -277,5 +286,16 @@ export class WebpageService
         },
       },
     });
+  }
+
+  async getDetailBy(params: GetDetailByParams) {
+    const data = await this.prismaService.clientExtended.webpage.findFirst({
+      select: {
+        webpage_id: true,
+      },
+      where: { ...params },
+    });
+    if (!data) throw new BadRequestException('Webpage not found');
+    return data;
   }
 }

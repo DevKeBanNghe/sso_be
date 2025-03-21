@@ -10,7 +10,7 @@ describe('PermissionService', () => {
       imports: [PermissionModule],
     });
 
-    service = module.get<PermissionService>(PermissionService);
+    service = await module.resolve<PermissionService>(PermissionService);
   });
 
   it('should be defined', () => {

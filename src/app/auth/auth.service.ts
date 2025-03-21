@@ -19,8 +19,6 @@ import {
   RefreshTokenParams,
   TokenData,
 } from './interfaces/token.interface';
-import { ConfigService } from '@nestjs/config';
-import { EnvVars } from 'src/consts/env.const';
 import { MailerService } from '@nestjs-modules/mailer';
 import { MailTemplate } from 'src/consts/mail.const';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
@@ -42,21 +40,15 @@ export class AuthService {
     private userService: UserService,
     private stringUtilService: StringUtilService,
     private jwtService: JwtService,
-    private configService: ConfigService,
     private readonly mailerService: MailerService,
     private readonly webpageService: WebpageService
   ) {}
 
   private readonly VERIFY_PASSWORD_EXPIRE_IN = '5m';
 
-  async verifyToken(
-    token: string,
-    secret_key: string = this.configService.get(EnvVars.JWT_SECRET_KEY)
-  ) {
+  async verifyToken(token: string) {
     try {
-      const decoded = await this.jwtService.verifyAsync(token, {
-        secret: secret_key,
-      });
+      const decoded = await this.jwtService.verifyAsync(token);
       return { decoded, error: null };
     } catch (error) {
       return { decoded: null, error };
@@ -366,5 +358,12 @@ export class AuthService {
 
   facebookHandle({ webpage_key, res }: SocialsSignDto) {
     return this.saveWebpageKeyToCookie({ webpage_key, res });
+  }
+
+  async getCookieKeys() {
+    return {
+      access_token_key: COOKIE_ACCESS_TOKEN_KEY,
+      refresh_token_key: COOKIE_REFRESH_TOKEN_KEY,
+    };
   }
 }

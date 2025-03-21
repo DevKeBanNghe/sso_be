@@ -9,7 +9,7 @@ describe('LoggingInterceptor', () => {
       providers: [LoggingInterceptor],
     });
 
-    interceptor = app.get(LoggingInterceptor);
+    interceptor = await app.resolve(LoggingInterceptor);
   });
   it('should be defined', () => {
     expect(interceptor).toBeDefined();

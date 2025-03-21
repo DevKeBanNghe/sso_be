@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Scope } from '@nestjs/common';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import {
   UpdateActivateStatusDto,
@@ -23,7 +23,7 @@ import { CaslAbilityFactory } from 'src/common/guards/access-control/casl/casl-a
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
 import { Permission } from '@prisma-postgresql/models';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class PermissionService
   implements
     CreateService<CreatePermissionDto>,

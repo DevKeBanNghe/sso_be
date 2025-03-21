@@ -12,22 +12,33 @@ import {
   Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import {
+  CreateUserDto,
+  CreateUsersSubscribeWebpageDto,
+} from './dto/create-user.dto';
 import { UpdateActivateStatusDto, UpdateUserDto } from './dto/update-user.dto';
 import { ParseParamsPaginationPipe } from 'src/common/pipes/parse-params-pagination.pipe';
 import { GetUserListByPaginationDto } from './dto/get-user.dto';
 import { User } from '@prisma-postgresql/models';
 import { Request } from 'src/common/interfaces/http.interface';
+import { HttpHeaders } from 'src/consts/enum.const';
+import { ApiService } from 'src/common/utils/api/api.service';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private apiService: ApiService
+  ) {}
 
   @Get('info')
   getUserInfo(@Req() req: Request) {
     const user = req.user;
-    const isUserActive = this.userService.isUserActive(user.user_id);
-    if (!user || !isUserActive) throw new UnauthorizedException();
+    const user_id = user.user_id;
+    if (!user_id) throw new UnauthorizedException();
+
+    const isUserActive = this.userService.isUserActive(user_id);
+    if (!isUserActive) throw new UnauthorizedException();
     return user;
   }
 
@@ -60,5 +71,27 @@ export class UserController {
   @Put('activate-status')
   updateActivateStatus(@Body() payload: UpdateActivateStatusDto) {
     return this.userService.updateActivateStatus(payload);
+  }
+
+  @Get('/subscribe-webpage')
+  getUsersSubscribeWebpage(@Req() req: Request) {
+    const webpage_key = this.apiService.getHeadersParam({
+      key: HttpHeaders.WEBPAGE_KEY,
+    });
+    return this.userService.getUsersSubscribeWebpage({ webpage_key });
+  }
+
+  @Post('subscribe')
+  createUsersSubscribeWebpage(
+    @Req() req: Request,
+    @Body() payload: CreateUsersSubscribeWebpageDto
+  ) {
+    const webpage_key = this.apiService.getHeadersParam({
+      key: HttpHeaders.WEBPAGE_KEY,
+    });
+    return this.userService.createUsersSubscribeWebpage({
+      webpage_key,
+      ...payload,
+    });
   }
 }

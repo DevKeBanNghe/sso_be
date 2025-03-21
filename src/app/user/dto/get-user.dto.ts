@@ -3,7 +3,7 @@ import { PaginationList } from 'src/common/classes/pagination-list.class';
 import { Prisma } from '@prisma/postgresql_client';
 import { DefaultArgs } from '@prisma/postgresql_client/runtime/library';
 import { HttpMethod } from 'src/common/interfaces/http.interface';
-import { Permission, User } from '@prisma-postgresql/models';
+import { Permission, User, Webpage } from '@prisma-postgresql/models';
 
 class GetUserListByPaginationDto extends IntersectionType(
   PaginationList,
@@ -22,8 +22,14 @@ class GetUserPermissionsParams extends IntersectionType(
   httpMethod: HttpMethod;
 }
 
+class GetUsersSubscribeWebpageDto extends PickType(Webpage, ['webpage_key']) {}
+
+class GetUserByParams extends PickType(User, ['user_email']) {}
+
 export {
   GetUserListByPaginationDto,
   GetUserByIDParams,
   GetUserPermissionsParams,
+  GetUsersSubscribeWebpageDto,
+  GetUserByParams,
 };
