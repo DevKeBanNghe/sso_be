@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  Scope,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/app/user/user.service';
 import { EnvVars } from 'src/consts/env.const';
@@ -13,13 +8,11 @@ import { HttpHeaders } from 'src/consts/enum.const';
 import { CaslAbilityFactory } from './casl/casl-ability.factory';
 import { isEmpty } from 'lodash';
 import { HttpMethod, Request } from '../../interfaces/http.interface';
-import {
-  CanAccessResourcesParams,
-  GetCurrentRouteParams,
-} from './dto/access-control.dto';
+import { CanAccessResourcesParams } from './dto/access-control.dto';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class AccessControlGuard implements CanActivate {
+  private req: Request;
   constructor(
     private configService: ConfigService,
     private userService: UserService,
@@ -28,23 +21,31 @@ export class AccessControlGuard implements CanActivate {
     private caslAbilityFactory: CaslAbilityFactory
   ) {}
 
-  getCurrentRoute({ requestPath, requestParams }: GetCurrentRouteParams) {
-    let basePath = requestPath;
-    for (const [key, value] of Object.entries(requestParams)) {
+  getCurrentRoute() {
+    const { path, params } = this.req;
+    let basePath = path;
+    for (const [key, value] of Object.entries(params)) {
       basePath = basePath.replace(value, `:${key}`);
     }
     return basePath.replace(this.configService.get(EnvVars.SERVER_PREFIX), '');
   }
 
-  private async canAccessResources({
-    user_id,
-    webpage_key,
-    currentRoute,
-    requestMethod,
-  }: CanAccessResourcesParams) {
+  private async canAccessResources({ user_id }: CanAccessResourcesParams) {
     const isSupperAdmin = await this.userService.isSupperAdmin({ user_id });
     if (isSupperAdmin) return true;
 
+    const webpage_key = this.apiService.getHeadersParam({
+      key: HttpHeaders.WEBPAGE_KEY,
+      headers: this.req.headers,
+    });
+
+    const isExistWebpage = await this.webpageService.isExistWebpage({
+      webpage_key,
+    });
+    if (!isExistWebpage) return false;
+
+    const currentRoute = this.getCurrentRoute();
+    const requestMethod = this.req.method as HttpMethod;
     const webpagePermissions = await this.webpageService.getWebpagePermissions({
       webpage_key,
       permission_router: currentRoute,
@@ -77,36 +78,17 @@ export class AccessControlGuard implements CanActivate {
     return canAccess;
   }
 
-  async isWebpageValid({ webpage_key }) {
-    const data = await this.webpageService.isExistWebpage({ webpage_key });
-    return data;
-  }
-
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  async canActivate(context: ExecutionContext) {
     const { getRequest } = context.switchToHttp();
-    const { path, params, method, headers, user } = getRequest<Request>();
+    const req = getRequest<Request>();
+    this.req = req;
+    const { user, originalUrl } = req;
 
-    if (this.apiService.isPathNotAuth()) return true;
+    if (this.apiService.isPathNotAuth({ originalUrl })) return true;
 
     if (!user) return false;
 
-    const webpage_key = headers[HttpHeaders.WEBPAGE_KEY] as string;
-    if (isEmpty(webpage_key)) return false;
-
-    const isWebpageValid = await this.isWebpageValid({ webpage_key });
-    if (!isWebpageValid) return false;
-
-    const currentRoute = this.getCurrentRoute({
-      requestPath: path,
-      requestParams: params,
-    });
-
-    const canAccess = await this.canAccessResources({
-      user_id: user.user_id,
-      webpage_key,
-      currentRoute,
-      requestMethod: method as HttpMethod,
-    });
+    const canAccess = await this.canAccessResources({ user_id: user.user_id });
     return canAccess;
   }
 }

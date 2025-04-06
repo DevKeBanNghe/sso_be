@@ -5,8 +5,8 @@ import {
   PartialType,
 } from '@nestjs/mapped-types';
 import { User, Webpage } from '@prisma-postgresql/models';
+import { ImportExcel } from 'src/common/classes/base.class';
 import { TRACKING_MODEL_FIELDS } from 'src/consts/model.const';
-
 class UserOption extends OmitType(User, [
   'devices',
   'roles',
@@ -27,4 +27,6 @@ class CreateUsersSubscribeWebpageDto extends IntersectionType(
   PartialType(PickType(Webpage, ['webpage_key']))
 ) {}
 
-export { CreateUserDto, CreateUsersSubscribeWebpageDto };
+class ImportUsersDto extends ImportExcel {}
+
+export { CreateUserDto, CreateUsersSubscribeWebpageDto, ImportUsersDto };

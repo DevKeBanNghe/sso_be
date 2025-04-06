@@ -10,7 +10,13 @@
           "error",
           {
             "enforceBuildableLibDependency": true,
-            "allow": ["src", "@prisma", "@nestjs", "passport-facebook"],
+            "allow": [
+              "src",
+              "@prisma",
+              "@nestjs",
+              "passport-facebook",
+              "exceljs"
+            ],
             "depConstraints": [
               {
                 "sourceTag": "*",

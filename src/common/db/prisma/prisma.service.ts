@@ -1,29 +1,22 @@
 import {
-  Inject,
   Injectable,
   Logger,
   OnModuleDestroy,
   OnModuleInit,
-  Scope,
 } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/postgresql_client';
 import { DateUtilService } from 'src/common/utils/date/date-util.service';
-import { omit } from 'lodash';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'src/common/interfaces/http.interface';
-@Injectable({ scope: Scope.REQUEST })
+import { isArray, omit } from 'lodash';
+@Injectable()
 export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  private is_connected = false;
+  private _is_connected = false;
   private readonly RETRY_AFTER = 3000; // ms
   private _clientExtended: ReturnType<typeof this.initClientExtended>;
 
-  constructor(
-    private dateUtilService: DateUtilService,
-    @Inject(REQUEST) private request: Request
-  ) {
+  constructor(private dateUtilService: DateUtilService) {
     super({
       transactionOptions: {
         // This feature is not available on MongoDB, because MongoDB does not support isolation levels.
@@ -35,19 +28,23 @@ export class PrismaService
     this.initClientExtended();
   }
 
-  filterArgs({ data, model }) {
+  filterArgs({ data, model }): any {
+    const fieldsOmit = ['user'];
     switch (model) {
       case 'User':
-        return omit(data, ['is_supper_admin']);
+        fieldsOmit.push('is_supper_admin');
+        break;
       case 'UserWebpage':
-        return omit(data, ['created_by']);
-      default:
-        return data;
+        fieldsOmit.push('created_by');
+        break;
     }
+    return isArray(data)
+      ? data.map((item) => omit(item, fieldsOmit))
+      : omit(data, fieldsOmit);
   }
 
   getCurrentUser(data) {
-    return data?.user_name ?? this.request?.user?.user_name;
+    return data?.user?.user_name ?? data?.user_name;
   }
 
   initClientExtended() {
@@ -80,9 +77,22 @@ export class PrismaService
             args.data = filterData;
             return query(args);
           },
+          createMany: async ({ args, query, model }) => {
+            const argsData: any = args.data;
+            const filterData = this.filterArgs({
+              data: argsData.map((item) => ({
+                ...item,
+                created_by: this.getCurrentUser(item),
+              })),
+              model,
+            });
+            args.data = filterData;
+            return query(args);
+          },
           update: async ({ args, query, model }) => {
-            const filterData = this.filterArgs({ data: args.data, model });
-            const currentUser = this.getCurrentUser(filterData);
+            const argsData = args.data;
+            const currentUser = this.getCurrentUser(argsData);
+            const filterData = this.filterArgs({ data: argsData, model });
             args.data = {
               ...filterData,
               updated_by: currentUser,
@@ -90,12 +100,17 @@ export class PrismaService
             return query(args);
           },
           updateMany: async ({ args, query, model }) => {
-            const filterData = this.filterArgs({ data: args.data, model });
-            const currentUser = this.getCurrentUser(filterData);
+            const argsData = args.data;
+            const currentUser = this.getCurrentUser(argsData);
+            const filterData = this.filterArgs({ data: argsData, model });
             args.data = {
               ...filterData,
               updated_by: currentUser,
             };
+            return query(args);
+          },
+          count: async ({ args, query }) => {
+            args.where = { ...args.where, deleted_at: null };
             return query(args);
           },
         },
@@ -147,17 +162,28 @@ export class PrismaService
     return this._clientExtended;
   }
 
-  getStatus() {
-    return this.is_connected;
+  get is_connected() {
+    return this._is_connected;
+  }
+
+  private set is_connected(is_connected: boolean) {
+    this._is_connected = is_connected;
   }
 
   private async connectToPrisma() {
+    const className = this.constructor.name;
     try {
       await this.$connect();
-      Logger.log('Connected to Prisma successfully!');
+      Logger.log({
+        message: 'Connected to Prisma successfully!',
+        context: className,
+      });
       this.is_connected = true;
     } catch (error) {
-      Logger.error('Error connecting to prisma, connecting...');
+      Logger.error({
+        message: 'Error connecting to prisma, connecting...',
+        context: className,
+      });
       setTimeout(async () => {
         await this.connectToPrisma();
       }, this.RETRY_AFTER);

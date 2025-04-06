@@ -4,16 +4,14 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { validationSchema } from 'src/confs/env.confs';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { UserModule } from './user/user.module';
 import { MailEnvs, WinstonEnvs } from 'src/consts/env.const';
 import { AuthModule } from './auth/auth.module';
 import { DeviceModule } from './device/device.module';
 import { ApiModule } from 'src/common/utils/api/api.module';
-import { DecodedTokenMiddleware } from 'src/common/middlewares/decoded-token.middleware';
 import { SaveTokenInterceptor } from './auth/interceptors/save-token.interceptor';
-import { DefaultParamsMiddleware } from 'src/common/middlewares/default-params.middleware';
-import { applyOtherMiddlewares } from 'src/common/middlewares';
+import { applyMiddlewares } from 'src/common/middlewares';
 import { RoleModule } from './role/role.module';
 import { PermissionModule } from './permission/permission.module';
 import { PrismaModule } from 'src/common/db/prisma/prisma.module';
@@ -30,6 +28,9 @@ import { ValidationPipe } from 'src/common/pipes/validation.pipe';
 import { UserRoleModule } from './user-role/user-role.module';
 import { CaslAbilityModule } from '../common/guards/access-control/casl/casl-ability.module';
 import { QueryUtilModule } from 'src/common/utils/query/query-util.module';
+import { ExcelUtilModule } from 'src/common/utils/excel/excel-util.module';
+import { FileUtilModule } from 'src/common/utils/file/file-util.module';
+import { AllExceptionFilter } from 'src/common/filters/all-exception.filter';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -73,6 +74,7 @@ import { QueryUtilModule } from 'src/common/utils/query/query-util.module';
         },
       }),
     }),
+    FileUtilModule,
     PrismaModule,
     UserModule,
     AuthModule,
@@ -86,9 +88,12 @@ import { QueryUtilModule } from 'src/common/utils/query/query-util.module';
     UserRoleModule,
     CaslAbilityModule,
     QueryUtilModule,
+    ExcelUtilModule,
   ],
   controllers: [AppController],
   providers: [
+    AppService,
+    SaveTokenInterceptor,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
@@ -97,8 +102,6 @@ import { QueryUtilModule } from 'src/common/utils/query/query-util.module';
       provide: APP_GUARD,
       useClass: AccessControlGuard,
     },
-    AppService,
-    SaveTokenInterceptor,
     {
       provide: APP_INTERCEPTOR,
       useClass: FormatResponseInterceptor,
@@ -107,10 +110,10 @@ import { QueryUtilModule } from 'src/common/utils/query/query-util.module';
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
-    // {
-    //   provide: APP_FILTER,
-    //   useClass: AllExceptionFilter,
-    // },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionFilter,
+    },
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
@@ -119,9 +122,6 @@ import { QueryUtilModule } from 'src/common/utils/query/query-util.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    applyOtherMiddlewares(consumer);
-    consumer
-      .apply(DefaultParamsMiddleware, DecodedTokenMiddleware)
-      .forRoutes('*');
+    applyMiddlewares(consumer);
   }
 }

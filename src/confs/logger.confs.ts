@@ -64,16 +64,14 @@ const _createDailyRotateFile = (
 export const LoggerCustom = WinstonModule.createLogger({
   instance: createLogger({
     transports: [
-      new Console({
-        format: _getCombine(),
-      }),
-      _createDailyRotateFile(LogLevel.INFO),
-      _createDailyRotateFile(LogLevel.ERROR),
-      _createDailyRotateFile(LogLevel.WARN),
-    ].concat(
-      env === Environments.DEVELOPMENT
-        ? _createDailyRotateFile(LogLevel.DEBUG)
-        : []
-    ),
+      new Console({ format: _getCombine() }),
+      ...(env === Environments.DEVELOPMENT
+        ? [_createDailyRotateFile(LogLevel.DEBUG)]
+        : [
+            _createDailyRotateFile(LogLevel.INFO),
+            _createDailyRotateFile(LogLevel.WARN),
+            _createDailyRotateFile(LogLevel.ERROR),
+          ]),
+    ],
   }),
 });

@@ -33,11 +33,11 @@ export class AllExceptionFilter implements ExceptionFilter {
     try {
       const ctx = host.switchToHttp();
       const response = ctx.getResponse<Response>();
-      const request = ctx.getRequest<Request>();
+      const req = ctx.getRequest<Request>();
       const { httpAdapter } = this.httpAdapterHost;
 
       const { funcPath, className } = this.getErrorContext(exception);
-      const path = httpAdapter.getRequestUrl(request);
+      const path = httpAdapter.getRequestUrl(req);
       const status =
         exception.getStatus?.() ?? HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -64,8 +64,8 @@ export class AllExceptionFilter implements ExceptionFilter {
 
       Logger.error({
         path,
-        requestId: request.headers[HttpHeaders.REQUEST_ID],
-        payload: JSON.stringify(this.apiService.getPayload()),
+        requestId: req.headers[HttpHeaders.REQUEST_ID],
+        payload: JSON.stringify(this.apiService.getPayload({ req })),
         errors: JSON.stringify(errorsInfo),
         message: `[${className}]`,
       });

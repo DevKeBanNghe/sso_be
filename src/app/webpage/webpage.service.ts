@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateWebpageDto } from './dto/create-webpage.dto';
+import { CreateWebpageDto, ImportWebpagesDto } from './dto/create-webpage.dto';
 import {
   UpdateActivateStatusDto,
   UpdateWebpageDto,
@@ -13,6 +13,7 @@ import {
 } from 'src/common/interfaces/service.interface';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';
 import {
+  ExportWebpagesDto,
   GetDetailByParams,
   GetWebpageListByPaginationDto,
   GetWebpagePermissionsParams,
@@ -23,7 +24,8 @@ import { RoleService } from '../role/role.service';
 import { BaseInstance } from 'src/common/classes/base.class';
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
 import { Webpage } from '@prisma-postgresql/models';
-import { uniq } from 'lodash';
+import { isEmpty, isEqual, uniq, uniqWith } from 'lodash';
+import { ExcelUtilService } from 'src/common/utils/excel/excel-util.service';
 
 @Injectable()
 export class WebpageService
@@ -35,11 +37,15 @@ export class WebpageService
     DeleteService,
     UpdateService<UpdateWebpageDto>
 {
+  private excelSheets = {
+    Webpages: 'Webpages',
+  };
   constructor(
     private prismaService: PrismaService,
     private apiService: ApiService,
     private roleService: RoleService,
-    private queryUtil: QueryUtilService
+    private queryUtil: QueryUtilService,
+    private excelUtilService: ExcelUtilService
   ) {
     super();
   }
@@ -128,6 +134,7 @@ export class WebpageService
     const skip = (page - 1) * itemPerPage;
     const fieldsSelectDefault = {
       webpage_id: true,
+      webpage_name: true,
       webpage_url: true,
       webpage_key: true,
       webpage_description: true,
@@ -296,6 +303,48 @@ export class WebpageService
       where: { ...params },
     });
     if (!data) throw new BadRequestException('Webpage not found');
+    return data;
+  }
+
+  private async getWebpagesExport({ ids }) {
+    if (isEmpty(ids)) return await this.getAll();
+    return await this.extended.findMany({
+      select: {
+        webpage_name: true,
+      },
+      where: {
+        webpage_id: { in: ids },
+      },
+    });
+  }
+
+  async exportWebpages({ ids }: ExportWebpagesDto) {
+    const data = await this.getWebpagesExport({ ids });
+    const dataBuffer = await this.excelUtilService.generateExcel({
+      worksheets: [
+        {
+          sheetName: this.excelSheets.Webpages,
+          data,
+        },
+      ],
+    });
+
+    return dataBuffer;
+  }
+
+  async importWebpages({ file, user }: ImportWebpagesDto) {
+    const dataCreated = await this.excelUtilService.read({ file });
+    if (isEmpty(dataCreated))
+      throw new BadRequestException('Import Webpages failed!');
+    const data = await this.extended.createMany({
+      data: uniqWith<Webpage>(
+        dataCreated[this.excelSheets.Webpages],
+        isEqual
+      ).map((item) => ({
+        ...item,
+        user,
+      })),
+    });
     return data;
   }
 }

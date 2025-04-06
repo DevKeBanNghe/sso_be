@@ -19,10 +19,11 @@ export class DecodedTokenMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    if (this.apiService.isPathNotAuth()) return next();
+    if (this.apiService.isPathNotAuth({ originalUrl: req.originalUrl }))
+      return next();
     const token =
       req.cookies[COOKIE_ACCESS_TOKEN_KEY] ??
-      this.apiService.getBearerToken() ??
+      this.apiService.getBearerToken({ headers: req.headers }) ??
       req.cookies[COOKIE_REFRESH_TOKEN_KEY];
 
     if (!token) throw new UnauthorizedException('Token is required!');
@@ -31,7 +32,9 @@ export class DecodedTokenMiddleware implements NestMiddleware {
 
     const { exp, ...payload } = decoded;
     const userRequest = req.user ?? {};
-    req.user = { ...userRequest, ...payload };
+    const userData = { ...userRequest, ...payload };
+    req.user = userData;
+    req.body.user = userData;
     return next();
   }
 }

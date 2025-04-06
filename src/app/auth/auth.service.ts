@@ -69,21 +69,40 @@ export class AuthService {
   }
 
   async signUp(signUpDto: SignUpDto) {
-    const { user_name, user_email, user_phone_number, user_password } =
-      signUpDto;
+    const {
+      user_name,
+      user_email,
+      user_phone_number,
+      user_password,
+      user_type_login,
+    } = signUpDto;
+    const userConditions = [
+      { user_email },
+      { user_name },
+      { user_phone_number },
+    ].filter((item) => Object.values(item)[0]);
     const user = await this.userService.extended.findFirst({
       select: {
         user_id: true,
+        user_name: true,
       },
       where: {
-        OR: [{ user_email }, { user_name }, { user_phone_number }],
+        OR: userConditions,
       },
     });
-    if (user) throw new BadRequestException('Information has been registered!');
+    if (user) {
+      await this.userService.update({
+        user_id: user.user_id,
+        user_type_login,
+      });
+      return await this.signIn({
+        user_name: user.user_name,
+        user_type_login,
+      });
+    }
 
-    const passwordHashed = await this.stringUtilService.hashSync(
-      user_password ?? this.stringUtilService.genRandom()
-    );
+    const userPassword = user_password ?? this.stringUtilService.random();
+    const passwordHashed = await this.stringUtilService.hashSync(userPassword);
     const userCreated = await this.userService.create({
       ...signUpDto,
       user_password: passwordHashed,
@@ -92,7 +111,7 @@ export class AuthService {
     if (!userCreated) throw new BadRequestException('Sign up failed');
     const data = await this.signIn({
       user_name: userCreated.user_name,
-      user_password,
+      user_password: userPassword,
     });
     return data;
   }
@@ -198,7 +217,7 @@ export class AuthService {
       user_email: user.email,
       user_first_name: user.first_name,
       user_last_name: user.last_name,
-      user_name: `${user.first_name} ${user.last_name}`,
+      user_name: `${user.first_name ?? ''} ${user.last_name ?? ''}`,
       user_password: null,
       user_image_url: user.picture,
       user_type_login: TypeLogin.GOOGLE,
@@ -213,7 +232,7 @@ export class AuthService {
       );
     const userFind = await this.userService.extended.findFirst({
       where: {
-        user_email: user.email ?? user.user_name,
+        user_name: user.email ?? user.user_name,
         user_type_login: TypeLogin.GITHUB,
       },
     });

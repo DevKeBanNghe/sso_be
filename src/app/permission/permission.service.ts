@@ -1,5 +1,8 @@
-import { BadRequestException, Injectable, Scope } from '@nestjs/common';
-import { CreatePermissionDto } from './dto/create-permission.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  CreatePermissionDto,
+  ImportPermissionsDto,
+} from './dto/create-permission.dto';
 import {
   UpdateActivateStatusDto,
   UpdatePermissionDto,
@@ -14,6 +17,7 @@ import {
 } from 'src/common/interfaces/service.interface';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';
 import {
+  ExportPermissionsDto,
   GetPermissionListByPaginationDto,
   GetPermissionOptionsDto,
   GetPermissionsByRoleDto,
@@ -22,9 +26,13 @@ import { ApiService } from 'src/common/utils/api/api.service';
 import { CaslAbilityFactory } from 'src/common/guards/access-control/casl/casl-ability.factory';
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
 import { Permission } from '@prisma-postgresql/models';
+import { BaseInstance } from 'src/common/classes/base.class';
+import { isEmpty, isEqual, uniqWith } from 'lodash';
+import { ExcelUtilService } from 'src/common/utils/excel/excel-util.service';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class PermissionService
+  extends BaseInstance
   implements
     CreateService<CreatePermissionDto>,
     GetAllService,
@@ -33,12 +41,25 @@ export class PermissionService
     UpdateService<UpdatePermissionDto>,
     GetOptionsService<GetPermissionOptionsDto>
 {
+  private excelSheets = {
+    Permissions: 'Permissions',
+  };
   constructor(
     private prismaService: PrismaService,
     private apiService: ApiService,
     private caslAbilityFactory: CaslAbilityFactory,
-    private queryUtil: QueryUtilService
-  ) {}
+    private queryUtil: QueryUtilService,
+    private excelUtilService: ExcelUtilService
+  ) {
+    super();
+  }
+
+  get instance() {
+    return this.prismaService.permission;
+  }
+  get extended() {
+    return this.prismaService.clientExtended.permission;
+  }
 
   async getPermissionsByRole({ webpage_url, roles }: GetPermissionsByRoleDto) {
     return this.prismaService.permission.findMany({
@@ -251,5 +272,47 @@ export class PermissionService
         },
       },
     });
+  }
+
+  private async getPermissionsExport({ ids }) {
+    if (isEmpty(ids)) return await this.getAll();
+    return await this.extended.findMany({
+      select: {
+        permission_name: true,
+      },
+      where: {
+        permission_id: { in: ids },
+      },
+    });
+  }
+
+  async exportPermissions({ ids }: ExportPermissionsDto) {
+    const data = await this.getPermissionsExport({ ids });
+    const dataBuffer = await this.excelUtilService.generateExcel({
+      worksheets: [
+        {
+          sheetName: this.excelSheets.Permissions,
+          data,
+        },
+      ],
+    });
+
+    return dataBuffer;
+  }
+
+  async importPermissions({ file, user }: ImportPermissionsDto) {
+    const dataCreated = await this.excelUtilService.read({ file });
+    if (isEmpty(dataCreated))
+      throw new BadRequestException('Import Permissions failed!');
+    const data = await this.extended.createMany({
+      data: uniqWith<Permission>(
+        dataCreated[this.excelSheets.Permissions],
+        isEqual
+      ).map((item) => ({
+        ...item,
+        user,
+      })),
+    });
+    return data;
   }
 }

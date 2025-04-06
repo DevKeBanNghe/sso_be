@@ -6,7 +6,7 @@
 
 generator class_validator {
   provider = "prisma-class-validator-generator"
-  output   = "../generated/prisma-postgresql"
+  output   = "../generated/prisma/postgresql"
 }
 
 generator client {

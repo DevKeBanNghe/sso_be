@@ -7,9 +7,10 @@ import {
   GetOptionsService,
   UpdateService,
 } from 'src/common/interfaces/service.interface';
-import { CreateRoleDto } from './dto/create-role.dto';
+import { CreateRoleDto, ImportRolesDto } from './dto/create-role.dto';
 import { PrismaService } from 'src/common/db/prisma/prisma.service';
 import {
+  ExportRolesDto,
   GetRoleListByPaginationDto,
   GetRoleOptionsDto,
 } from './dto/get-role.dto';
@@ -20,11 +21,14 @@ import {
   UpdateWebpageDto,
 } from './dto/update-role.dto';
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
-import { isEmpty } from 'lodash';
+import { isEmpty, isEqual, uniqWith } from 'lodash';
 import { Role, Webpage } from '@prisma-postgresql/models';
+import { BaseInstance } from 'src/common/classes/base.class';
+import { ExcelUtilService } from 'src/common/utils/excel/excel-util.service';
 
 @Injectable()
 export class RoleService
+  extends BaseInstance
   implements
     CreateService<CreateRoleDto>,
     GetAllService,
@@ -33,11 +37,25 @@ export class RoleService
     UpdateService<UpdateRoleDto>,
     GetOptionsService<GetRoleOptionsDto>
 {
+  private excelSheets = {
+    Roles: 'Roles',
+  };
   constructor(
     private prismaService: PrismaService,
     private apiService: ApiService,
-    private queryUtil: QueryUtilService
-  ) {}
+    private queryUtil: QueryUtilService,
+    private excelUtilService: ExcelUtilService
+  ) {
+    super();
+  }
+
+  get instance() {
+    return this.prismaService.role;
+  }
+  get extended() {
+    return this.prismaService.clientExtended.role;
+  }
+
   getOptions(getOptionsDto: GetRoleOptionsDto) {
     const { limit, search = '' } = getOptionsDto ?? {};
     const fieldsSelect = {
@@ -210,5 +228,46 @@ export class RoleService
         },
       },
     });
+  }
+
+  private async getRolesExport({ ids }) {
+    if (isEmpty(ids)) return await this.getAll();
+    return await this.extended.findMany({
+      select: {
+        role_name: true,
+      },
+      where: {
+        role_id: { in: ids },
+      },
+    });
+  }
+
+  async exportRoles({ ids }: ExportRolesDto) {
+    const data = await this.getRolesExport({ ids });
+    const dataBuffer = await this.excelUtilService.generateExcel({
+      worksheets: [
+        {
+          sheetName: this.excelSheets.Roles,
+          data,
+        },
+      ],
+    });
+
+    return dataBuffer;
+  }
+
+  async importRoles({ file, user }: ImportRolesDto) {
+    const dataCreated = await this.excelUtilService.read({ file });
+    if (isEmpty(dataCreated))
+      throw new BadRequestException('Import Roles failed!');
+    const data = await this.extended.createMany({
+      data: uniqWith<Role>(dataCreated[this.excelSheets.Roles], isEqual).map(
+        (item) => ({
+          ...item,
+          user,
+        })
+      ),
+    });
+    return data;
   }
 }

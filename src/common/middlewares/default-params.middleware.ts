@@ -14,7 +14,7 @@ export class DefaultParamsMiddleware implements NestMiddleware {
   private customHeaders(headers: IncomingHttpHeaders) {
     const headersValueCustom = {
       [HttpHeaders.REQUEST_ID]:
-        headers[HttpHeaders.REQUEST_ID] ?? this.stringUtilService.genRandom(),
+        headers[HttpHeaders.REQUEST_ID] ?? this.stringUtilService.random(),
       [HttpHeaders.VERSION]:
         headers[HttpHeaders.VERSION] ??
         this.configService.get(EnvVars.API_VERSION),

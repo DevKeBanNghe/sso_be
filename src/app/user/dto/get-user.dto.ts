@@ -4,7 +4,6 @@ import { Prisma } from '@prisma/postgresql_client';
 import { DefaultArgs } from '@prisma/postgresql_client/runtime/library';
 import { HttpMethod } from 'src/common/interfaces/http.interface';
 import { Permission, User, Webpage } from '@prisma-postgresql/models';
-
 class GetUserListByPaginationDto extends IntersectionType(
   PaginationList,
   PartialType(User)
@@ -26,10 +25,15 @@ class GetUsersSubscribeWebpageDto extends PickType(Webpage, ['webpage_key']) {}
 
 class GetUserByParams extends PickType(User, ['user_email']) {}
 
+class ExportUsersDto {
+  ids: User['user_id'][];
+}
+
 export {
   GetUserListByPaginationDto,
   GetUserByIDParams,
   GetUserPermissionsParams,
   GetUsersSubscribeWebpageDto,
   GetUserByParams,
+  ExportUsersDto,
 };

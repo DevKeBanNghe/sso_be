@@ -4,7 +4,8 @@ import { User } from '@prisma-postgresql/models';
 
 export class UpdateUserDto extends IntersectionType(
   PickType(User, ['user_id']),
-  PartialType(CreateUserDto)
+  PartialType(CreateUserDto),
+  PickType(PartialType(User), ['user_type_login'])
 ) {}
 
 export class UpdateActivateStatusDto extends IntersectionType(

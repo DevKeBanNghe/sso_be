@@ -20,11 +20,14 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     profile: any,
     done: (err?: Error | null, profile?: any) => void
   ) {
-    const { name, login: user_name, ...payload } = profile._json;
-    const indexFirstSpaceName = name.indexOf(' ');
+    const { name, login, ...payload } = profile._json;
+    const user_name = name ?? login;
+    const indexFirstSpaceName = user_name.indexOf(' ');
     const user = {
-      first_name: name.slice(0, indexFirstSpaceName),
-      last_name: name.slice(indexFirstSpaceName + 1),
+      first_name:
+        indexFirstSpaceName >= 0 ? name.slice(0, indexFirstSpaceName) : null,
+      last_name:
+        indexFirstSpaceName >= 0 ? name.slice(indexFirstSpaceName + 1) : null,
       user_name,
       ...payload,
       access_token,

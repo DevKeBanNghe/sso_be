@@ -8,6 +8,9 @@ import {
   Put,
   Query,
   Param,
+  UseInterceptors,
+  UploadedFile,
+  Req,
 } from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { CreatePermissionDto } from './dto/create-permission.dto';
@@ -22,6 +25,8 @@ import {
 } from './dto/get-permission.dto';
 import { ParseParamsOptionPipe } from 'src/common/pipes/parse-params-option.pipe';
 import { Permission } from '@prisma-postgresql/models';
+import { ExcelResponseInterceptor } from 'src/common/interceptors/excel-response.interceptor';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('permissions')
 export class PermissionController {
@@ -43,6 +48,19 @@ export class PermissionController {
     @Query() getListByPaginationDto: GetPermissionListByPaginationDto
   ) {
     return this.permissionService.getList(getListByPaginationDto);
+  }
+
+  @Get('export')
+  @UseInterceptors(ExcelResponseInterceptor)
+  async exportPermissions(@Query('ids') ids: Permission['permission_id'][]) {
+    const data = await this.permissionService.exportPermissions({ ids });
+    return data;
+  }
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  importUsers(@UploadedFile() file, @Req() req) {
+    return this.permissionService.importPermissions({ file, user: req.user });
   }
 
   @Get('options')

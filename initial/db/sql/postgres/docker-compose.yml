@@ -1,12 +1,12 @@
 version: ${VERSION}
 
 services:
-  pg1:
-    container_name: pg1
+  pg_master_sso:
+    container_name: pg_master_sso
     build:
       context: .
     volumes:
-      - ${PATH_BACKUP_DATA}/pg1:/var/lib/postgresql/data
+      - ${PATH_BACKUP_DATA}/pg_master_sso:/var/lib/postgresql/data
     environment:
       - POSTGRES_MASTER=true
     ports:

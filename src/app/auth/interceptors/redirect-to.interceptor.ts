@@ -6,12 +6,17 @@ import {
 } from '@nestjs/common';
 import { map } from 'rxjs';
 import { SaveTokenInterceptor } from './save-token.interceptor';
-import { COOKIE_REDIRECT_KEY } from 'src/consts/cookie.const';
 import { Request, Response } from 'express';
+import { COOKIE_REDIRECT_KEY } from 'src/consts/cookie.const';
+import { ConfigService } from '@nestjs/config';
+import { EnvVars } from 'src/consts/env.const';
 
 @Injectable()
 export class RedirectToInterceptor {
-  constructor(private saveTokenInterceptor: SaveTokenInterceptor) {}
+  constructor(
+    private saveTokenInterceptor: SaveTokenInterceptor,
+    private configService: ConfigService
+  ) {}
   intercept(context: ExecutionContext, next: CallHandler) {
     const { getRequest, getResponse } = context.switchToHttp();
     const req = getRequest<Request>();
@@ -20,7 +25,8 @@ export class RedirectToInterceptor {
       map(async (data) => {
         this.saveTokenInterceptor.setTokenToCookie(res, data);
         res.clearCookie(COOKIE_REDIRECT_KEY);
-        const webpage_url = data.webpage_url;
+        const webpage_url =
+          data.webpage_url ?? this.configService.get(EnvVars.FE_URL);
         if (webpage_url) {
           try {
             res.redirect(webpage_url);

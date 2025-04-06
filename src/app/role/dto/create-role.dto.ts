@@ -1,8 +1,9 @@
 import { OmitType } from '@nestjs/mapped-types';
 import { Role } from '@prisma-postgresql/models';
+import { ImportExcel } from 'src/common/classes/base.class';
 import { TRACKING_MODEL_FIELDS } from 'src/consts/model.const';
 
-export class CreateRoleDto extends OmitType(Role, [
+class CreateRoleDto extends OmitType(Role, [
   'children',
   'parent',
   'users',
@@ -11,3 +12,7 @@ export class CreateRoleDto extends OmitType(Role, [
   'role_id',
   ...TRACKING_MODEL_FIELDS,
 ]) {}
+
+class ImportRolesDto extends ImportExcel {}
+
+export { CreateRoleDto, ImportRolesDto };

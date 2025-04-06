@@ -169,7 +169,8 @@ export class AuthController {
   @UseInterceptors(SaveTokenInterceptor)
   async refreshToken(@Req() req: Request, @Res() res: Response) {
     const token =
-      req.cookies[COOKIE_REFRESH_TOKEN_KEY] ?? this.apiService.getBearerToken();
+      req.cookies[COOKIE_REFRESH_TOKEN_KEY] ??
+      this.apiService.getBearerToken({ headers: req.headers });
     if (!token) throw new UnauthorizedException('Token is required!');
     const newTokens = await this.authService.refreshToken({
       token,

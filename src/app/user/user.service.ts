@@ -10,10 +10,12 @@ import {
 import {
   CreateUserDto,
   CreateUsersSubscribeWebpageDto,
+  ImportUsersDto,
 } from './dto/create-user.dto';
 import { UpdateActivateStatusDto, UpdateUserDto } from './dto/update-user.dto';
 import { ApiService } from 'src/common/utils/api/api.service';
 import {
+  ExportUsersDto,
   GetUserByIDParams,
   GetUserByParams,
   GetUserListByPaginationDto,
@@ -25,6 +27,8 @@ import { BaseInstance } from 'src/common/classes/base.class';
 import { QueryUtilService } from 'src/common/utils/query/query-util.service';
 import { User } from '@prisma-postgresql/models';
 import { WebpageService } from '../webpage/webpage.service';
+import { ExcelUtilService } from 'src/common/utils/excel/excel-util.service';
+import { isEmpty, isEqual, uniqWith } from 'lodash';
 
 @Injectable()
 export class UserService
@@ -36,12 +40,16 @@ export class UserService
     GetDetailService,
     DeleteService
 {
+  private excelSheets = {
+    Users: 'Users',
+  };
   constructor(
     private prismaService: PrismaService,
     private apiService: ApiService,
     private stringUtilService: StringUtilService,
     private queryUtil: QueryUtilService,
-    private webpageService: WebpageService
+    private webpageService: WebpageService,
+    private excelUtilService: ExcelUtilService
   ) {
     super();
   }
@@ -55,7 +63,7 @@ export class UserService
   }
 
   remove(ids: User['user_id'][]) {
-    return this.prismaService.clientExtended.user.softDelete({
+    return this.extended.softDelete({
       user_id: {
         in: ids,
       },
@@ -96,7 +104,7 @@ export class UserService
   }
 
   getAll() {
-    return this.prismaService.user.findMany({
+    return this.extended.findMany({
       select: {
         user_id: true,
         user_name: true,
@@ -120,7 +128,7 @@ export class UserService
     });
 
     const skip = (page - 1) * itemPerPage;
-    const list = await this.prismaService.clientExtended.user.findMany({
+    const list = await this.extended.findMany({
       select: {
         ...{ ...userFieldsSelect, user_type_login: true },
         roles: {
@@ -147,7 +155,7 @@ export class UserService
     }));
     return this.apiService.formatPagination<typeof listData>({
       list: listData,
-      totalItems: await this.instance.count(),
+      totalItems: await this.extended.count(),
       page,
       itemPerPage,
     });
@@ -170,7 +178,7 @@ export class UserService
     const user_password = user_password_update
       ? await this.stringUtilService.hashSync(user_password_update)
       : user.user_password;
-    return this.prismaService.clientExtended.user.update({
+    return this.extended.update({
       where: { user_id },
       data: {
         ...dataUpdate,
@@ -180,7 +188,7 @@ export class UserService
   }
 
   async create(createDto: CreateUserDto) {
-    return await this.prismaService.clientExtended.user.create({
+    return await this.extended.create({
       data: {
         ...createDto,
       },
@@ -284,7 +292,7 @@ export class UserService
   }
 
   updateActivateStatus({ user_ids, ...dataUpdate }: UpdateActivateStatusDto) {
-    return this.prismaService.clientExtended.user.updateMany({
+    return this.extended.updateMany({
       data: dataUpdate,
       where: {
         user_id: {
@@ -295,7 +303,7 @@ export class UserService
   }
 
   async isSupperAdmin({ user_id }: { user_id: User['user_id'] }) {
-    const data = await this.prismaService.clientExtended.user.findFirst({
+    const data = await this.extended.findFirst({
       where: {
         user_id,
         is_supper_admin: 1,
@@ -348,5 +356,46 @@ export class UserService
       },
     });
     return data.map((item) => item.user);
+  }
+
+  private async getUsersExport({ ids }) {
+    if (isEmpty(ids)) return await this.getAll();
+    return await this.extended.findMany({
+      select: {
+        user_name: true,
+      },
+      where: {
+        user_id: { in: ids },
+      },
+    });
+  }
+
+  async exportUsers({ ids }: ExportUsersDto) {
+    const data = await this.getUsersExport({ ids });
+    const dataBuffer = await this.excelUtilService.generateExcel({
+      worksheets: [
+        {
+          sheetName: this.excelSheets.Users,
+          data,
+        },
+      ],
+    });
+
+    return dataBuffer;
+  }
+
+  async importUsers({ file, user }: ImportUsersDto) {
+    const dataCreated = await this.excelUtilService.read({ file });
+    if (isEmpty(dataCreated))
+      throw new BadRequestException('Import users failed!');
+    const data = await this.extended.createMany({
+      data: uniqWith<User>(dataCreated[this.excelSheets.Users], isEqual).map(
+        (item) => ({
+          ...item,
+          user,
+        })
+      ),
+    });
+    return data;
   }
 }

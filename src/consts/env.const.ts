@@ -38,3 +38,7 @@ export enum FacebookEnvs {
   FACEBOOK_CLIENT_ID = 'FACEBOOK_CLIENT_ID',
   FACEBOOK_CLIENT_SECRET = 'FACEBOOK_CLIENT_SECRET',
 }
+
+export enum MulterEnvs {
+  MULTER_DEST_FILE = 'MULTER_DEST_FILE',
+}

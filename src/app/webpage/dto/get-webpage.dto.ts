@@ -18,9 +18,14 @@ class GetWebpagePermissionsParams extends IntersectionType(
 }
 class GetDetailByParams extends PickType(Webpage, ['webpage_key']) {}
 
+class ExportWebpagesDto {
+  ids: Webpage['webpage_id'][];
+}
+
 export {
   IsExistWebpageParams,
   GetWebpageListByPaginationDto,
   GetWebpagePermissionsParams,
   GetDetailByParams,
+  ExportWebpagesDto,
 };

@@ -1,19 +1,6 @@
-import { IntersectionType, PickType } from '@nestjs/mapped-types';
-import { User, Webpage } from '@prisma-postgresql/models';
-import { Request } from 'express';
-import { HttpMethod } from 'src/common/interfaces/http.interface';
+import { PickType } from '@nestjs/mapped-types';
+import { User } from '@prisma-postgresql/models';
 
-class CanAccessResourcesParams extends IntersectionType(
-  PickType(User, ['user_id']),
-  PickType(Webpage, ['webpage_key'])
-) {
-  currentRoute: string;
-  requestMethod: HttpMethod;
-}
+class CanAccessResourcesParams extends PickType(User, ['user_id']) {}
 
-class GetCurrentRouteParams {
-  requestPath: Request['path'];
-  requestParams: Request['params'];
-}
-
-export { CanAccessResourcesParams, GetCurrentRouteParams };
+export { CanAccessResourcesParams };

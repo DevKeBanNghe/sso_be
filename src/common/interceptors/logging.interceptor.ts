@@ -4,7 +4,6 @@ import {
   Injectable,
   Logger,
   NestInterceptor,
-  Scope,
 } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
 import { Request } from 'express';
@@ -13,7 +12,7 @@ import { EnvVars } from 'src/consts/env.const';
 import { HttpHeaders } from 'src/consts/enum.const';
 import { ConfigService } from '@nestjs/config';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   constructor(
     private apiService: ApiService,
@@ -35,7 +34,7 @@ export class LoggingInterceptor implements NestInterceptor {
       message: '',
       context: contextLog,
       path,
-      payload: JSON.stringify(this.apiService.getPayload()),
+      payload: JSON.stringify(this.apiService.getPayload({ req })),
       requestId,
     });
     return next.handle().pipe(
