@@ -1,13 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import { DateUtilService } from './date-util.service';
+import { AutoMockingTestingModule } from 'src/common/testing/auto-mocking/auto-mocking-testing.module';
 
 describe('DateUtilService', () => {
   let service: DateUtilService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [DateUtilService],
-    }).compile();
+    const module: TestingModule =
+      await AutoMockingTestingModule.createTestingModule({
+        providers: [DateUtilService],
+      });
 
     service = module.get<DateUtilService>(DateUtilService);
   });

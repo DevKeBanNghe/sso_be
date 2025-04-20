@@ -1,13 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import { AutoMockingTestingService } from './auto-mocking-testing.service';
+import { AutoMockingTestingModule } from './auto-mocking-testing.module';
 
 describe('AutoMockingTestingService', () => {
   let service: AutoMockingTestingService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [AutoMockingTestingService],
-    }).compile();
+    const module: TestingModule =
+      await AutoMockingTestingModule.createTestingModule({
+        providers: [AutoMockingTestingService],
+      });
 
     service = module.get<AutoMockingTestingService>(AutoMockingTestingService);
   });

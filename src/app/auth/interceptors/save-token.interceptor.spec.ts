@@ -1,4 +1,4 @@
-import { Test } from '@nestjs/testing';
+import { AutoMockingTestingModule } from 'src/common/testing/auto-mocking/auto-mocking-testing.module';
 import { SaveTokenInterceptor } from './save-token.interceptor';
 import { StringUtilService } from 'src/common/utils/string/string-util.service';
 
@@ -6,9 +6,9 @@ describe('SaveTokenInterceptor', () => {
   let interceptor: SaveTokenInterceptor;
 
   beforeAll(async () => {
-    const app = await Test.createTestingModule({
+    const app = await AutoMockingTestingModule.createTestingModule({
       providers: [SaveTokenInterceptor, StringUtilService],
-    }).compile();
+    });
 
     interceptor = app.get<SaveTokenInterceptor>(SaveTokenInterceptor);
   });
