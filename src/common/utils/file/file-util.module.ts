@@ -8,6 +8,7 @@ import { StringUtilModule } from '../string/string-util.module';
 import { basename, extname } from 'path';
 import { DateUtilService } from '../date/date-util.service';
 import { DateUtilModule } from '../date/date-util.module';
+import { mkdirSync } from 'fs';
 
 @Global()
 @Module({
@@ -20,7 +21,23 @@ import { DateUtilModule } from '../date/date-util.module';
         dateUtilService: DateUtilService
       ) => ({
         storage: diskStorage({
-          destination: configService.get<string>(MulterEnvs.MULTER_DEST_FILE),
+          destination: (req, file, cb) => {
+            const ext = extname(file.originalname).toLowerCase();
+            let destination = configService.get<string>(
+              MulterEnvs.MULTER_DEST_FILE
+            );
+            const uploads = {
+              '/excels': ['.xlsx', '.xls'],
+              '/images': ['.png', '.jpg', '.jpeg'],
+            };
+            for (const [path, extensions] of Object.entries(uploads)) {
+              if (extensions.includes(ext)) {
+                destination = destination.concat(path);
+              }
+            }
+            mkdirSync(destination, { recursive: true });
+            cb(null, destination);
+          },
           filename: (req, file, callback) => {
             const extFile = extname(file.originalname);
             const fileName = stringUtilService.removeSpace(
