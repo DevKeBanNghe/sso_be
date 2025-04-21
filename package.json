@@ -5,7 +5,7 @@
   "scripts": {
     "start": "nx serve",
     "build": "nx build",
-    "prod": "npm run build && pm2 start --env production",
+    "prod": "node dist/main.js",
     "test": "nx test",
     "e2e": "nx e2e e2e",
     "format": "nx format:write",
