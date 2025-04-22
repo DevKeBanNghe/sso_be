@@ -10,11 +10,11 @@ import { AuthToken } from '../interfaces/token.interface';
 import { Request, Response } from 'express';
 import {
   COOKIE_ACCESS_TOKEN_KEY,
+  COOKIE_DOMAIN_FE,
   COOKIE_REFRESH_TOKEN_KEY,
 } from 'src/consts/cookie.const';
 import ms from 'ms';
 import { ConfigService } from '@nestjs/config';
-import { EnvVars } from 'src/consts/env.const';
 
 @Injectable()
 export class SaveTokenInterceptor implements NestInterceptor {
@@ -24,14 +24,14 @@ export class SaveTokenInterceptor implements NestInterceptor {
       res.cookie(COOKIE_ACCESS_TOKEN_KEY, access_token, {
         httpOnly: true,
         maxAge: ms(TokenExpireIn.ACCESS_TOKEN_EXPIRE_IN),
-        domain: this.configService.get(EnvVars.FE_URL),
+        domain: COOKIE_DOMAIN_FE,
       });
 
     if (refresh_token)
       res.cookie(COOKIE_REFRESH_TOKEN_KEY, refresh_token, {
         httpOnly: true,
         maxAge: ms(TokenExpireIn.REFRESH_TOKEN_EXPIRE_IN),
-        domain: this.configService.get(EnvVars.FE_URL),
+        domain: COOKIE_DOMAIN_FE,
       });
   }
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {

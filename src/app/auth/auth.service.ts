@@ -26,6 +26,7 @@ import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { WebpageService } from '../webpage/webpage.service';
 import {
   COOKIE_ACCESS_TOKEN_KEY,
+  COOKIE_DOMAIN_FE,
   COOKIE_REDIRECT_EXPIRE_IN,
   COOKIE_REDIRECT_KEY,
   COOKIE_REFRESH_TOKEN_KEY,
@@ -34,7 +35,6 @@ import ms from 'ms';
 import { TypeLogin } from '@prisma-postgresql/enums';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
-import { EnvVars } from 'src/consts/env.const';
 
 @Injectable()
 export class AuthService {
@@ -368,7 +368,7 @@ export class AuthService {
     res.cookie(COOKIE_REDIRECT_KEY, webpage_key, {
       httpOnly: true,
       maxAge: ms(COOKIE_REDIRECT_EXPIRE_IN),
-      domain: this.configService.get(EnvVars.FE_URL),
+      domain: COOKIE_DOMAIN_FE,
     });
   }
   googleOAuth2Handle({ webpage_key, res }: SocialsSignDto) {

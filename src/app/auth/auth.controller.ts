@@ -25,6 +25,7 @@ import { GoogleOAuth2Guard } from './guards/google-oauth2.guard';
 import { Request, Response } from 'express';
 import {
   COOKIE_ACCESS_TOKEN_KEY,
+  COOKIE_DOMAIN_FE,
   COOKIE_REDIRECT_KEY,
   COOKIE_REFRESH_TOKEN_KEY,
 } from 'src/consts/cookie.const';
@@ -35,7 +36,6 @@ import { ApiService } from 'src/common/utils/api/api.service';
 import { FacebookGuard } from './guards/facebook.guard';
 import { TypeLogin } from '@prisma-postgresql/enums';
 import { ConfigService } from '@nestjs/config';
-import { EnvVars } from 'src/consts/env.const';
 
 @Controller('auth')
 export class AuthController {
@@ -158,10 +158,10 @@ export class AuthController {
   @Get('logout')
   logout(@Res() res: Response) {
     res.clearCookie(COOKIE_ACCESS_TOKEN_KEY, {
-      domain: this.configService.get(EnvVars.FE_URL),
+      domain: COOKIE_DOMAIN_FE,
     });
     res.clearCookie(COOKIE_REFRESH_TOKEN_KEY, {
-      domain: this.configService.get(EnvVars.FE_URL),
+      domain: COOKIE_DOMAIN_FE,
     });
     res.status(200).json({});
     return {};
