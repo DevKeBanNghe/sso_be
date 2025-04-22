@@ -25,7 +25,6 @@ import { GoogleOAuth2Guard } from './guards/google-oauth2.guard';
 import { Request, Response } from 'express';
 import {
   COOKIE_ACCESS_TOKEN_KEY,
-  COOKIE_DOMAIN_FE,
   COOKIE_REDIRECT_KEY,
   COOKIE_REFRESH_TOKEN_KEY,
 } from 'src/consts/cookie.const';
@@ -157,12 +156,8 @@ export class AuthController {
 
   @Get('logout')
   logout(@Res() res: Response) {
-    res.clearCookie(COOKIE_ACCESS_TOKEN_KEY, {
-      domain: COOKIE_DOMAIN_FE,
-    });
-    res.clearCookie(COOKIE_REFRESH_TOKEN_KEY, {
-      domain: COOKIE_DOMAIN_FE,
-    });
+    res.clearCookie(COOKIE_ACCESS_TOKEN_KEY);
+    res.clearCookie(COOKIE_REFRESH_TOKEN_KEY);
     res.status(200).json({});
     return {};
   }

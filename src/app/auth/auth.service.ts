@@ -26,12 +26,10 @@ import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { WebpageService } from '../webpage/webpage.service';
 import {
   COOKIE_ACCESS_TOKEN_KEY,
-  COOKIE_DOMAIN_FE,
-  COOKIE_REDIRECT_EXPIRE_IN,
   COOKIE_REDIRECT_KEY,
   COOKIE_REFRESH_TOKEN_KEY,
+  cookieConfigsDefault,
 } from 'src/consts/cookie.const';
-import ms from 'ms';
 import { TypeLogin } from '@prisma-postgresql/enums';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
@@ -77,7 +75,7 @@ export class AuthService {
       user_email,
       user_phone_number,
       user_password,
-      user_type_login,
+      user_type_login = TypeLogin.ACCOUNT,
     } = signUpDto;
     const userConditions = [
       { user_email },
@@ -94,6 +92,9 @@ export class AuthService {
       },
     });
     if (user) {
+      if (user_type_login === TypeLogin.ACCOUNT) {
+        throw new BadRequestException('User already exists!');
+      }
       await this.userService.update({
         user_id: user.user_id,
         user_type_login,
@@ -365,11 +366,7 @@ export class AuthService {
   }
 
   private saveWebpageKeyToCookie({ webpage_key, res }: SocialsSignDto) {
-    res.cookie(COOKIE_REDIRECT_KEY, webpage_key, {
-      httpOnly: true,
-      maxAge: ms(COOKIE_REDIRECT_EXPIRE_IN),
-      domain: COOKIE_DOMAIN_FE,
-    });
+    res.cookie(COOKIE_REDIRECT_KEY, webpage_key, cookieConfigsDefault);
   }
   googleOAuth2Handle({ webpage_key, res }: SocialsSignDto) {
     return this.saveWebpageKeyToCookie({ webpage_key, res });
