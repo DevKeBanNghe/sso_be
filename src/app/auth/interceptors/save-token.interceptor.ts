@@ -13,20 +13,25 @@ import {
   COOKIE_REFRESH_TOKEN_KEY,
 } from 'src/consts/cookie.const';
 import ms from 'ms';
+import { ConfigService } from '@nestjs/config';
+import { EnvVars } from 'src/consts/env.const';
 
 @Injectable()
 export class SaveTokenInterceptor implements NestInterceptor {
+  constructor(private configService: ConfigService) {}
   setTokenToCookie(res: Response, { access_token, refresh_token }: AuthToken) {
     if (access_token)
       res.cookie(COOKIE_ACCESS_TOKEN_KEY, access_token, {
         httpOnly: true,
         maxAge: ms(TokenExpireIn.ACCESS_TOKEN_EXPIRE_IN),
+        domain: this.configService.get(EnvVars.FE_URL),
       });
 
     if (refresh_token)
       res.cookie(COOKIE_REFRESH_TOKEN_KEY, refresh_token, {
         httpOnly: true,
         maxAge: ms(TokenExpireIn.REFRESH_TOKEN_EXPIRE_IN),
+        domain: this.configService.get(EnvVars.FE_URL),
       });
   }
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {

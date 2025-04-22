@@ -33,6 +33,8 @@ import {
 import ms from 'ms';
 import { TypeLogin } from '@prisma-postgresql/enums';
 import { CreateUserDto } from '../user/dto/create-user.dto';
+import { ConfigService } from '@nestjs/config';
+import { EnvVars } from 'src/consts/env.const';
 
 @Injectable()
 export class AuthService {
@@ -41,7 +43,8 @@ export class AuthService {
     private stringUtilService: StringUtilService,
     private jwtService: JwtService,
     private readonly mailerService: MailerService,
-    private readonly webpageService: WebpageService
+    private readonly webpageService: WebpageService,
+    private readonly configService: ConfigService
   ) {}
 
   private readonly VERIFY_PASSWORD_EXPIRE_IN = '5m';
@@ -365,6 +368,7 @@ export class AuthService {
     res.cookie(COOKIE_REDIRECT_KEY, webpage_key, {
       httpOnly: true,
       maxAge: ms(COOKIE_REDIRECT_EXPIRE_IN),
+      domain: this.configService.get(EnvVars.FE_URL),
     });
   }
   googleOAuth2Handle({ webpage_key, res }: SocialsSignDto) {

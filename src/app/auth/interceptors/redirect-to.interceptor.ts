@@ -24,9 +24,9 @@ export class RedirectToInterceptor {
     return next.handle().pipe(
       map(async (data) => {
         this.saveTokenInterceptor.setTokenToCookie(res, data);
-        res.clearCookie(COOKIE_REDIRECT_KEY);
         const webpage_url =
           data.webpage_url ?? this.configService.get(EnvVars.FE_URL);
+        res.clearCookie(COOKIE_REDIRECT_KEY, { domain: webpage_url });
         if (webpage_url) {
           try {
             res.redirect(webpage_url);
