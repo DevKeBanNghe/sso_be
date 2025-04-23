@@ -15,13 +15,20 @@ import {
 
 @Injectable()
 export class SaveTokenInterceptor implements NestInterceptor {
-  setTokenToCookie(res: Response, { access_token, refresh_token }: AuthToken) {
+  setTokenToCookie(
+    res: Response,
+    { access_token, refresh_token, webpage_url }: AuthToken
+  ) {
+    const cookieConfigs = cookieConfigsDefault;
+    if (webpage_url) {
+      cookieConfigs.domain = webpage_url.split('//')[1].replace('/', '');
+    }
     if (access_token) {
-      res.cookie(COOKIE_ACCESS_TOKEN_KEY, access_token, cookieConfigsDefault);
+      res.cookie(COOKIE_ACCESS_TOKEN_KEY, access_token, cookieConfigs);
     }
 
     if (refresh_token)
-      res.cookie(COOKIE_REFRESH_TOKEN_KEY, refresh_token, cookieConfigsDefault);
+      res.cookie(COOKIE_REFRESH_TOKEN_KEY, refresh_token, cookieConfigs);
   }
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const { getRequest, getResponse } = context.switchToHttp();
