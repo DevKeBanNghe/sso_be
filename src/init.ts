@@ -18,11 +18,7 @@ export const initApp = async (app: INestApplication) => {
     const webpageService = await app.resolve(WebpageService);
     const webpageRegisted = await webpageService.getWhiteList();
     app.enableCors({
-      origin: [
-        configService.get(EnvVars.FE_URL),
-        ...webpageRegisted,
-        'https://blog-be-9lwn.onrender.com',
-      ],
+      origin: [configService.get(EnvVars.FE_URL), ...webpageRegisted],
       credentials: true,
     });
   } catch (error) {
