@@ -1,6 +1,7 @@
 import { SignInDto } from './dto/sign.dto';
 import { AuthService } from './auth.service';
-import { AuthModule } from './auth.module';
+// import { AuthModule } from './auth.module';
+import { AppModule } from '../app.module';
 import { AutoMockingTestingModule } from 'src/common/testing/auto-mocking/auto-mocking-testing.module';
 
 describe('AuthService', () => {
@@ -8,7 +9,7 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     const moduleRef = await AutoMockingTestingModule.createTestingModule({
-      imports: [AuthModule],
+      imports: [AppModule],
     });
     service = await moduleRef.resolve(AuthService);
   });

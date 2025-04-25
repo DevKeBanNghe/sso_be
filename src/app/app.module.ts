@@ -31,6 +31,7 @@ import { QueryUtilModule } from 'src/common/utils/query/query-util.module';
 import { ExcelUtilModule } from 'src/common/utils/excel/excel-util.module';
 import { FileUtilModule } from 'src/common/utils/file/file-util.module';
 import { AllExceptionFilter } from 'src/common/filters/all-exception.filter';
+import { CacheModule } from '@nestjs/cache-manager';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -73,6 +74,14 @@ import { AllExceptionFilter } from 'src/common/filters/all-exception.filter';
           },
         },
       }),
+    }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        ttl: configService.get('CACHE_TTL') ?? 300000,
+      }),
+      inject: [ConfigService],
     }),
     FileUtilModule,
     PrismaModule,

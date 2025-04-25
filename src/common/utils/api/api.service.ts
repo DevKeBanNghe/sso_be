@@ -19,17 +19,13 @@ export class ApiService {
 
   isPathNotAuth({ originalUrl }) {
     const rootPath = this.removeQueryParameters(originalUrl);
-    return PATHS_NOT_AUTH.includes(
-      rootPath.replace(this.configService.get(EnvVars.SERVER_PREFIX), '')
-    );
+    return PATHS_NOT_AUTH.some((path) => rootPath.includes(path));
   }
 
   getPayload({ req }) {
     const data = { ...req.query, ...req.params, ...req.body };
     const currentPath = req.path;
-    const isSignPath = PATHS_SIGN.some((signPath) =>
-      currentPath.includes(signPath)
-    );
+    const isSignPath = PATHS_SIGN.some((path) => currentPath.includes(path));
     return isSignPath
       ? omit(data, ['user_password', 'confirm_password'])
       : data;

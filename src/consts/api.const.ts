@@ -10,4 +10,5 @@ export const PATHS_NOT_AUTH = [
   '/auth/github-redirect',
   '/auth/facebook',
   '/auth/facebook-redirect',
+  '/auth/cookie-keys',
 ];

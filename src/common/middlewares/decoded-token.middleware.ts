@@ -25,7 +25,6 @@ export class DecodedTokenMiddleware implements NestMiddleware {
       req.cookies[COOKIE_ACCESS_TOKEN_KEY] ??
       this.apiService.getBearerToken({ headers: req.headers }) ??
       req.cookies[COOKIE_REFRESH_TOKEN_KEY];
-
     if (!token) throw new UnauthorizedException('Token is required!');
     const { decoded, error } = await this.authService.verifyToken(token);
     if (error) throw error;

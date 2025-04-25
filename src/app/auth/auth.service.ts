@@ -32,7 +32,6 @@ import {
 } from 'src/consts/cookie.const';
 import { TypeLogin } from '@prisma-postgresql/enums';
 import { CreateUserDto } from '../user/dto/create-user.dto';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -41,8 +40,7 @@ export class AuthService {
     private stringUtilService: StringUtilService,
     private jwtService: JwtService,
     private readonly mailerService: MailerService,
-    private readonly webpageService: WebpageService,
-    private readonly configService: ConfigService
+    private readonly webpageService: WebpageService
   ) {}
 
   private readonly VERIFY_PASSWORD_EXPIRE_IN = '5m';

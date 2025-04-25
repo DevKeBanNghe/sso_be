@@ -10,6 +10,7 @@ import {
   Query,
   Redirect,
   Res,
+  Inject,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -34,27 +35,34 @@ import { GithubGuard } from './guards/github.guard';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { FacebookGuard } from './guards/facebook.guard';
 import { TypeLogin } from '@prisma-postgresql/enums';
-import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { HttpHeaders } from 'src/consts/enum.const';
+import { isString } from 'lodash';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly apiService: ApiService,
-    private readonly configService: ConfigService
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   @Post('sign-in')
   @UseInterceptors(SaveTokenInterceptor)
   async signIn(@Body() { webpage_key, ...dataSingIn }: SignInDto) {
     const data = await this.authService.signIn(dataSingIn);
-
     if (!webpage_key) return data;
     const webpage = await this.authService.getWebpageRedirect(webpage_key);
-    return {
+    const dataRes = {
       ...data,
       ...webpage,
     };
+    await this.cacheManager.set(
+      `${data.user_id}_${webpage_key}`,
+      JSON.stringify(dataRes),
+      60000
+    );
+    return dataRes;
   }
 
   @Post('sign-up')
@@ -169,7 +177,25 @@ export class AuthController {
 
   @Get('refresh-token')
   @UseInterceptors(SaveTokenInterceptor)
-  async refreshToken(@Req() req: Request, @Res() res: Response) {
+  async refreshToken(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query('user_id') user_id
+  ) {
+    const webpage_key = this.apiService.getHeadersParam({
+      key: HttpHeaders.WEBPAGE_KEY,
+      headers: req.headers,
+    });
+    const isRefreshTokenRedirect = user_id && webpage_key;
+    if (isRefreshTokenRedirect) {
+      const key = `${user_id}_${webpage_key}`;
+      const data = await this.cacheManager.get(key);
+      if (isString(data)) {
+        await this.cacheManager.del(key);
+        return JSON.parse(data);
+      }
+    }
+
     const token =
       req.cookies[COOKIE_REFRESH_TOKEN_KEY] ??
       this.apiService.getBearerToken({ headers: req.headers });

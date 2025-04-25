@@ -27,7 +27,6 @@ import { HttpHeaders } from 'src/consts/enum.const';
 import { ApiService } from 'src/common/utils/api/api.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ExcelResponseInterceptor } from 'src/common/interceptors/excel-response.interceptor';
-
 @Controller('users')
 export class UserController {
   constructor(
@@ -36,7 +35,7 @@ export class UserController {
   ) {}
 
   @Get('info')
-  getUserInfo(@Req() req: Request) {
+  async getUserInfo(@Req() req: Request) {
     const user = req.user;
     const user_id = user.user_id;
     if (!user_id) throw new UnauthorizedException();

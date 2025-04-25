@@ -1,7 +1,6 @@
-import { Webpage } from '@prisma-postgresql/models';
 import { Permission, User } from '@prisma/postgresql_client';
 import { Response } from 'express';
-interface AuthToken extends Partial<Pick<Webpage, 'webpage_url'>> {
+interface AuthToken {
   access_token: string;
   refresh_token: string;
 }
