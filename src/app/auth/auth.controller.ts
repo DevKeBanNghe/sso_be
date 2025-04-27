@@ -187,6 +187,7 @@ export class AuthController {
       headers: req.headers,
     });
     const isRefreshTokenRedirect = user_id && webpage_key;
+    console.log('>>> is refresh', user_id, webpage_key);
     if (isRefreshTokenRedirect) {
       const key = `${user_id}_${webpage_key}`;
       const data = await this.cacheManager.get(key);
