@@ -200,7 +200,7 @@ export class AuthController {
     const token =
       req.cookies[COOKIE_REFRESH_TOKEN_KEY] ??
       this.apiService.getBearerToken({ headers: req.headers });
-    console.log('🚀 ~ AuthController ~ token outside:', token);
+    console.log('🚀 ~ AuthController ~ token outside:', token, user_id);
     if (!token) throw new UnauthorizedException('Token is required!');
     const newTokens = await this.authService.refreshToken({
       token,
