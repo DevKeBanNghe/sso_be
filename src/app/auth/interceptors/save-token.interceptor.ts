@@ -12,12 +12,9 @@ import {
   COOKIE_REFRESH_TOKEN_KEY,
   cookieConfigsDefault,
 } from 'src/consts/cookie.const';
-import { ApiService } from 'src/common/utils/api/api.service';
-import { HttpHeaders } from 'src/consts/enum.const';
 
 @Injectable()
 export class SaveTokenInterceptor implements NestInterceptor {
-  constructor(private apiService: ApiService) {}
   setTokenToCookie(res: Response, { access_token, refresh_token }: AuthToken) {
     if (access_token) {
       res.cookie(COOKIE_ACCESS_TOKEN_KEY, access_token, cookieConfigsDefault);
@@ -32,13 +29,7 @@ export class SaveTokenInterceptor implements NestInterceptor {
     const res = getResponse<Response>();
     return next.handle().pipe(
       map((data) => {
-        const webpage_key = this.apiService.getHeadersParam({
-          key: HttpHeaders.WEBPAGE_KEY,
-          headers: req.headers,
-        });
-        console.log('>>> more', !webpage_key && !req.query?.user_id, data);
-        if (!webpage_key && !req.query?.user_id)
-          this.setTokenToCookie(res, data);
+        this.setTokenToCookie(res, data);
         return data;
       })
     );

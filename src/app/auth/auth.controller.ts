@@ -192,6 +192,7 @@ export class AuthController {
       const data = await this.cacheManager.get(key);
       if (isString(data)) {
         await this.cacheManager.del(key);
+        console.log('🚀 ~ AuthController ~ data:', JSON.parse(data));
         return JSON.parse(data);
       }
     }
@@ -199,6 +200,7 @@ export class AuthController {
     const token =
       req.cookies[COOKIE_REFRESH_TOKEN_KEY] ??
       this.apiService.getBearerToken({ headers: req.headers });
+    console.log('🚀 ~ AuthController ~ token outside:', token);
     if (!token) throw new UnauthorizedException('Token is required!');
     const newTokens = await this.authService.refreshToken({
       token,
