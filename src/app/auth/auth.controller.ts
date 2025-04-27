@@ -187,13 +187,11 @@ export class AuthController {
       headers: req.headers,
     });
     const isRefreshTokenRedirect = user_id && webpage_key;
-    console.log('>>> is refresh', user_id, webpage_key);
     if (isRefreshTokenRedirect) {
       const key = `${user_id}_${webpage_key}`;
       const data = await this.cacheManager.get(key);
       if (isString(data)) {
         await this.cacheManager.del(key);
-        console.log('🚀 ~ AuthController ~ data:', JSON.parse(data));
         return JSON.parse(data);
       }
     }
@@ -201,7 +199,6 @@ export class AuthController {
     const token =
       req.cookies[COOKIE_REFRESH_TOKEN_KEY] ??
       this.apiService.getBearerToken({ headers: req.headers });
-    console.log('🚀 ~ AuthController ~ token outside:', token, user_id);
     if (!token) throw new UnauthorizedException('Token is required!');
     const newTokens = await this.authService.refreshToken({
       token,
