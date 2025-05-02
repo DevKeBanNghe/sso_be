@@ -7,7 +7,10 @@ import {
 import { map } from 'rxjs';
 import { SaveTokenInterceptor } from './save-token.interceptor';
 import { Request, Response } from 'express';
-import { COOKIE_REDIRECT_KEY } from 'src/consts/cookie.const';
+import {
+  COOKIE_REDIRECT_KEY,
+  cookieConfigsDefault,
+} from 'src/consts/cookie.const';
 import { ConfigService } from '@nestjs/config';
 import { EnvVars } from 'src/consts/env.const';
 
@@ -26,7 +29,7 @@ export class RedirectToInterceptor {
         this.saveTokenInterceptor.setTokenToCookie(res, data);
         const webpage_url =
           data.webpage_url ?? this.configService.get(EnvVars.FE_URL);
-        res.clearCookie(COOKIE_REDIRECT_KEY);
+        res.clearCookie(COOKIE_REDIRECT_KEY, cookieConfigsDefault);
         if (webpage_url) {
           try {
             res.redirect(webpage_url);

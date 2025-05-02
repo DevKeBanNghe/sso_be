@@ -28,6 +28,7 @@ import {
   COOKIE_ACCESS_TOKEN_KEY,
   COOKIE_REDIRECT_KEY,
   COOKIE_REFRESH_TOKEN_KEY,
+  cookieConfigsDefault,
 } from 'src/consts/cookie.const';
 import { RedirectToInterceptor } from './interceptors/redirect-to.interceptor';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password.dto';
@@ -164,8 +165,8 @@ export class AuthController {
 
   @Get('logout')
   logout(@Res() res: Response) {
-    res.clearCookie(COOKIE_ACCESS_TOKEN_KEY);
-    res.clearCookie(COOKIE_REFRESH_TOKEN_KEY);
+    res.clearCookie(COOKIE_ACCESS_TOKEN_KEY, cookieConfigsDefault);
+    res.clearCookie(COOKIE_REFRESH_TOKEN_KEY, cookieConfigsDefault);
     res.status(200).json({});
     return {};
   }
